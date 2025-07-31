@@ -1,4 +1,4 @@
- /* --- 基本变量和重置 --- */
+/* --- 基本变量和重置 --- */
 :root {
     --primary-color: #6c5ce7;
     /* 主要颜色 */
@@ -579,33 +579,37 @@ body {
     }
 }
 
- /* 简单样式，你可以根据需要调整 */
- .header-buttons {
-     display: flex;
-     justify-content: flex-end; /* 将按钮靠右对齐 */
-     gap: 10px; /* 按钮之间的间距 */
-     padding: 10px;
- }
- .header-buttons .btn {
-     padding: 8px 15px;
-     border: none;
-     border-radius: 5px;
-     cursor: pointer;
-     text-decoration: none;
-     color: white;
-     font-size: 14px;
-     display: flex; /* 让图标和文字在同一行 */
-     align-items: center; /* 垂直居中对齐 */
- }
- .header-buttons .github-btn {
-     background-color: #333; /* GitHub 常用颜色 */
- }
- .header-buttons .feedback-btn {
-     background-color: #007bff; /* 蓝色，可根据喜好调整 */
- }
- .header-buttons .btn img {
-     height: 1.2em; /* 图标高度与字体大小匹配 */
-     margin-right: 5px; /* 图标和文字之间的间距 */
-     vertical-align: middle; /* 垂直对齐 */
-     filter: invert(1); /* 将黑色图标反转为白色，以便在深色背景上显示 */
- }
+/* 简单样式，你可以根据需要调整 */
+.header-buttons {
+    display: flex;
+    justify-content: flex-end; /* 将按钮靠右对齐 */
+    gap: 10px; /* 按钮之间的间距 */
+    padding: 10px;
+}
+
+.header-buttons .btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    color: white;
+    font-size: 14px;
+    display: flex; /* 让图标和文字在同一行 */
+    align-items: center; /* 垂直居中对齐 */
+}
+
+.header-buttons .github-btn {
+    background-color: #333; /* GitHub 常用颜色 */
+}
+
+.header-buttons .feedback-btn {
+    background-color: #007bff; /* 蓝色，可根据喜好调整 */
+}
+
+.header-buttons .btn img {
+    height: 1.2em; /* 图标高度与字体大小匹配 */
+    margin-right: 5px; /* 图标和文字之间的间距 */
+    vertical-align: middle; /* 垂直对齐 */
+    filter: invert(1); /* 将黑色图标反转为白色，以便在深色背景上显示 */
+}
