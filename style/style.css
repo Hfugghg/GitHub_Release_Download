@@ -1,0 +1,611 @@
+ /* --- 基本变量和重置 --- */
+:root {
+    --primary-color: #6c5ce7;
+    /* 主要颜色 */
+    --secondary-color: #a8a4e6;
+    /* 次要颜色 */
+    --light-gray: #f0f0f0;
+    /* 浅灰色 */
+    --medium-gray: #ccc;
+    /* 中等灰色 */
+    --dark-gray: #555;
+    /* 深灰色 */
+    --text-color: #333;
+    /* 文本颜色 */
+    --error-color: #e74c3c;
+    /* 错误颜色 */
+    --success-color: #2ecc71;
+    /* 成功颜色 */
+    --bg-gradient-start: #74ebd5;
+    /* 背景渐变开始颜色 */
+    --bg-gradient-end: #ACB6E5;
+    /* 背景渐变结束颜色 */
+}
+
+* {
+    margin: 0;
+    /* 外边距 */
+    padding: 0;
+    /* 内边距 */
+    box-sizing: border-box;
+    /* 盒子模型 */
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    /* 字体系列 */
+}
+
+body {
+    min-height: 100vh;
+    /* 最小高度为视口高度 */
+    display: flex;
+    /* 弹性布局 */
+    flex-direction: column;
+    /* 垂直排列 */
+    align-items: center;
+    /* 水平居中 */
+    /* 水平居中容器 */
+    padding: 20px;
+    /* 内边距 */
+    background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+    /* 背景渐变 */
+}
+
+/* --- 主容器 --- */
+.container {
+    background: rgba(255, 255, 255, 0.98);
+    /* 背景颜色，带透明度 */
+    border-radius: 15px;
+    /* 边框圆角 */
+    padding: 1.5rem 2rem;
+    /* 调整后的内边距 */
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.1);
+    /* 阴影 */
+    text-align: center;
+    /* 文本居中 */
+    width: 95%;
+    /* 内容宽度更宽 */
+    max-width: 800px;
+    /* 增加最大宽度 */
+    margin-top: 20px;
+    /* 上外边距 */
+    margin-bottom: 20px;
+    /* 下外边距 */
+}
+
+/* --- 仓库选择区域 --- */
+.repo-selection {
+    margin-bottom: 1.5rem;
+    /* 下外边距 */
+    padding-bottom: 1.5rem;
+    /* 下内边距 */
+    border-bottom: 1px solid var(--medium-gray);
+    /* 下边框 */
+}
+
+.repo-selection h2 {
+    color: var(--text-color);
+    /* 文本颜色 */
+    margin-bottom: 1rem;
+    /* 下外边距 */
+    font-size: 1.3rem;
+    /* 字体大小 */
+    font-weight: 600;
+    /* 字体粗细 */
+}
+
+.predefined-repos {
+    display: flex;
+    /* 弹性布局 */
+    flex-wrap: wrap;
+    /* 小屏幕上允许按钮换行 */
+    gap: 0.8rem;
+    /* 间距 */
+    justify-content: center;
+    /* 水平居中 */
+    margin-bottom: 1rem;
+    /* 下外边距 */
+}
+
+.custom-repo {
+    display: flex;
+    /* 弹性布局 */
+    gap: 0.5rem;
+    /* 间距 */
+    justify-content: center;
+    /* 水平居中 */
+    align-items: center;
+    /* 垂直居中 */
+    /* 垂直对齐项目 */
+    flex-wrap: wrap;
+    /* 允许换行 */
+}
+
+.custom-repo input[type="text"] {
+    padding: 10px 15px;
+    /* 内边距 */
+    border: 1px solid var(--medium-gray);
+    /* 边框 */
+    border-radius: 20px;
+    /* 边框圆角 */
+    font-size: 0.95rem;
+    /* 字体大小 */
+    flex-grow: 1;
+    /* 允许输入框占据可用空间 */
+    /* 允许输入框占据可用空间 */
+    min-width: 200px;
+    /* 最小宽度 */
+}
+
+/* --- 按钮 --- */
+.btn {
+    background: var(--primary-color);
+    /* 背景颜色 */
+    color: white;
+    /* 文本颜色 */
+    padding: 10px 20px;
+    /* 内边距 */
+    border: none;
+    /* 无边框 */
+    border-radius: 20px;
+    /* 边框圆角 */
+    font-size: 0.95rem;
+    /* 字体大小 */
+    font-weight: 500;
+    /* 字体粗细 */
+    cursor: pointer;
+    /* 鼠标指针样式 */
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    /* 过渡效果 */
+    text-decoration: none;
+    /* 无文本装饰 */
+    display: inline-block;
+    /* 行内块元素 */
+    white-space: nowrap;
+    /* 防止按钮文本换行 */
+    /* 防止按钮文本换行 */
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    /* 悬停时向上移动 */
+    box-shadow: 0 6px 15px rgba(108, 92, 231, 0.3);
+    /* 悬停时阴影效果 */
+}
+
+.btn.repo-btn {
+    /* 如果需要，仓库按钮的特定样式 */
+    background-color: var(--secondary-color);
+    /* 背景颜色 */
+}
+
+.btn.repo-btn.active {
+    /* 激活的仓库按钮的样式 */
+    background-color: var(--primary-color);
+    /* 背景颜色 */
+    font-weight: bold;
+    /* 字体加粗 */
+    box-shadow: 0 4px 10px rgba(108, 92, 231, 0.2);
+    /* 阴影效果 */
+}
+
+.btn.download-btn {
+    font-size: 0.9rem;
+    /* 字体大小 */
+    padding: 8px 15px;
+    /* 内边距 */
+    margin-top: 8px;
+    /* 下载按钮上方添加一些空间 */
+}
+
+.btn.custom-fetch-btn {
+    /* 稍微不同的内边距 */
+    padding: 10px 15px;
+}
+
+/* --- 状态/加载区域 --- */
+.status-section {
+    margin-top: 1rem;
+    /* 在状态区域上方添加间距 */
+    min-height: 80px;
+    /* 预留空间 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* 垂直居中内容 */
+    gap: 0.5rem;
+}
+
+.spinner {
+    width: 35px;
+    height: 35px;
+    border: 4px solid var(--light-gray);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1.2s linear infinite;
+    display: none;
+    /* 默认隐藏 */
+}
+
+#statusTitle {
+    color: var(--text-color);
+    margin-bottom: 0.3rem;
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+#statusText {
+    color: var(--dark-gray);
+    font-size: 1rem;
+    line-height: 1.5;
+    min-height: 1.5em;
+    /* 为一行文本预留空间 */
+}
+
+#statusText.error {
+    color: var(--error-color);
+    font-weight: 500;
+}
+
+/* --- 发布信息区域 --- */
+.release-info {
+    margin-top: 1.5rem;
+    text-align: left;
+    /* 左对齐发布说明 */
+    background-color: #f9f9f9;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--light-gray);
+    display: none;
+    /* 默认隐藏 */
+}
+
+.release-info h3 {
+    color: var(--text-color);
+    /* 设置文本颜色 */
+    margin-bottom: 0.8rem;
+    /* 设置下边距 */
+    font-size: 1.2rem;
+    /* 设置字体大小 */
+    border-bottom: 1px solid var(--medium-gray);
+    /* 设置下边框 */
+    padding-bottom: 0.5rem;
+    /* 设置下内边距 */
+}
+
+.release-body {
+    color: var(--dark-gray);
+    /* 设置文本颜色 */
+    font-size: 0.95rem;
+    /* 设置字体大小 */
+    line-height: 1.6;
+    /* 设置行高 */
+    white-space: pre-wrap;
+    /* 保留空白符并自动换行 */
+    word-wrap: break-word;
+    /* 打断长单词 */
+    max-height: 400px;
+    /* 限制最大高度并使其可滚动 */
+    overflow-y: auto;
+    /* 必要时添加垂直滚动条 */
+}
+
+/* 基本 Markdown 格式 */
+.release-body strong {
+    font-weight: bold;
+    /* 设置粗体 */
+}
+
+.release-body h1,
+.release-body h2,
+.release-body h3,
+.release-body h4 {
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+    font-weight: 600;
+    color: #333;
+}
+
+.release-body h1 {
+    font-size: 1.5em;
+}
+
+.release-body h2 {
+    font-size: 1.3em;
+}
+
+.release-body h3 {
+    font-size: 1.15em;
+}
+
+.release-body h4 {
+    font-size: 1.0em;
+}
+
+.release-body a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.release-body a:hover {
+    text-decoration: underline;
+}
+
+.release-body ul,
+.release-body ol {
+    margin-left: 2em;
+    margin-bottom: 1em;
+}
+
+.release-body code {
+    background-color: #eee;
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: monospace;
+}
+
+.release-body pre {
+    background-color: #eee;
+    padding: 1em;
+    border-radius: 5px;
+    overflow-x: auto;
+}
+
+.release-body pre code {
+    background-color: transparent;
+    padding: 0;
+}
+
+.release-body img {
+    max-width: 100%;
+    /* 确保图片不会溢出 */
+    height: auto;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.release-body table {
+    border-collapse: collapse;
+    margin-bottom: 1em;
+    width: auto;
+    /* 如果需要，也可以设置为 100% */
+}
+
+.release-body th,
+.release-body td {
+    border: 1px solid #ccc;
+    padding: 0.5em;
+}
+
+.release-body th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+}
+
+/* --- 下载资源区域 --- */
+.download-assets {
+    margin-top: 1.5rem;
+    text-align: left;
+    display: none;
+    /* 默认隐藏 */
+}
+
+.download-assets h3 {
+    color: var(--text-color);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    text-align: center;
+    /* 居中显示 '下载文件' 标题 */
+}
+
+.asset-item {
+    background-color: #fff;
+    border: 1px solid var(--light-gray);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    /* flex-wrap: wrap;
+    在小屏幕上允许换行 */
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    /* 在信息和按钮之间留出空间 */
+    align-items: center;
+    /* 垂直对齐项目 */
+    gap: 1rem;
+    /* 信息和按钮之间的间距 */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.asset-info {
+    flex-grow: 1;
+    /* 允许信息区域增长 */
+    min-width: 0;
+    /* 允许文本截断 */
+}
+
+.asset-name {
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 1.05rem;
+    word-break: break-all;
+    /* 打断过长的文件名 */
+    margin-bottom: 0.3rem;
+}
+
+.asset-details {
+    font-size: 0.85rem;
+    color: var(--dark-gray);
+}
+
+.asset-details span {
+    margin-right: 10px;
+    /* 详情之间的间距 */
+}
+
+/* --- 动画 --- */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* --- 响应式设计 --- */
+@media (max-width: 600px) {
+    .container {
+        padding: 1rem 1.5rem;
+        width: 100%;
+        /* 在极小屏幕上使用全宽度 */
+    }
+
+    .asset-item {
+        /* 小屏幕下保持垂直排列 */
+        flex-direction: column;
+    }
+
+    .predefined-repos {
+        gap: 0.5rem;
+    }
+
+    .btn {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+    }
+
+    .btn.download-btn {
+        width: 100%;
+        /* 在资源项中使下载按钮全宽度 */
+        flex-shrink: 0;
+        margin-top: 0;
+        /* 移除可能存在的顶部间距 */
+    }
+
+    .custom-repo input[type="text"] {
+        min-width: 150px;
+        /* 调整最小宽度 */
+        width: calc(100% - 85px);
+        /* 根据按钮宽度调整 */
+    }
+}
+
+#statusTitle {
+    font-size: 1.2rem;
+}
+
+#statusText {
+    font-size: 0.9rem;
+}
+
+.release-info h3,
+.download-assets h3 {
+    font-size: 1.1rem;
+}
+
+.release-body {
+    font-size: 0.9rem;
+}
+
+.asset-item {
+    /* flex-direction: column; */
+    /* 垂直堆叠信息和按钮 */
+    align-items: flex-start;
+    /* 将项目对齐到起始位置 */
+}
+
+.asset-name {
+    font-size: 1rem;
+}
+
+@media (max-width: 400px) {
+    .custom-repo {
+        flex-direction: column;
+        /* 堆叠输入框和按钮 */
+        align-items: stretch;
+        /* 使它们宽度撑满父元素 */
+    }
+
+    .custom-repo input[type="text"] {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .btn.custom-fetch-btn {
+        width: 100%;
+    }
+}
+
+#repoDropdown {
+    position: absolute;
+    display: none;
+    border: 1px solid #ccc;
+    background-color: white;
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0;
+    margin-top: 5px;
+    top: 100%;
+    /* 相对于父元素底部定位 */
+    left: 0;
+}
+
+#repoDropdown div {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    /* 添加分隔线 */
+}
+
+#repoDropdown div:last-child {
+    border-bottom: none;
+    /* 移除最后一个元素的底部分隔线 */
+}
+
+#repoDropdown div:hover {
+    background-color: #f0f0f0;
+    /* 添加悬停效果 */
+}
+
+/* 手机端样式 */
+@media (max-width: 768px) {
+    #repoDropdown {
+        max-height: 200px;
+        /* 手机端减少高度 */
+    }
+}
+
+ /* 简单样式，你可以根据需要调整 */
+ .header-buttons {
+     display: flex;
+     justify-content: flex-end; /* 将按钮靠右对齐 */
+     gap: 10px; /* 按钮之间的间距 */
+     padding: 10px;
+ }
+ .header-buttons .btn {
+     padding: 8px 15px;
+     border: none;
+     border-radius: 5px;
+     cursor: pointer;
+     text-decoration: none;
+     color: white;
+     font-size: 14px;
+     display: flex; /* 让图标和文字在同一行 */
+     align-items: center; /* 垂直居中对齐 */
+ }
+ .header-buttons .github-btn {
+     background-color: #333; /* GitHub 常用颜色 */
+ }
+ .header-buttons .feedback-btn {
+     background-color: #007bff; /* 蓝色，可根据喜好调整 */
+ }
+ .header-buttons .btn img {
+     height: 1.2em; /* 图标高度与字体大小匹配 */
+     margin-right: 5px; /* 图标和文字之间的间距 */
+     vertical-align: middle; /* 垂直对齐 */
+     filter: invert(1); /* 将黑色图标反转为白色，以便在深色背景上显示 */
+ }
