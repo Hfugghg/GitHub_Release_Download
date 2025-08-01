@@ -3,18 +3,23 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>GitHub 最新 Release 下载器</title>
-    <link rel="stylesheet" href="style/style.css">
+    <link href="style/style.css" rel="stylesheet">
 </head>
 
 <body>
 <div class="header-buttons">
-    <a href="https://github.com/Hfugghg/GitHub_Release_Download" target="_blank" class="btn github-btn">
-        <img src="https://www.svgrepo.com/show/361509/github-logo.svg" alt="GitHub Logo">
+    <a class="btn github-btn" href="https://github.com/Hfugghg/GitHub_Release_Download" target="_blank">
+        <img alt="GitHub Logo" src="https://www.svgrepo.com/show/361509/github-logo.svg">
         本项目主页
     </a>
-    <a href="https://github.com/Hfugghg/GitHub_Release_Download/issues" target="_blank" class="btn feedback-btn">反馈问题</a>
+    <a class="btn feedback-btn" href="https://github.com/Hfugghg/GitHub_Release_Download/issues"
+       target="_blank">反馈问题</a>
+    <a class="btn qq-btn" href="javascript:void(0);" id="qqGroupBtn">
+        <img alt="QQ Logo" src="https://www.svgrepo.com/show/447108/qq-fill.svg">
+        加入QQ群
+    </a>
 </div>
 
 <div class="container">
@@ -23,7 +28,7 @@
         <div class="predefined-repos" id="predefinedRepos">
         </div>
         <div class="custom-repo" style="position: relative;">
-            <input type="text" id="customRepoInput" placeholder="输入 用户名/仓库名 (例如: octocat/Spoon-Knife)">
+            <input id="customRepoInput" placeholder="输入 用户名/仓库名 (例如: octocat/Spoon-Knife)" type="text">
             <div id="repoDropdown"></div>
             <button class="btn custom-fetch-btn" id="fetchCustomRepoBtn">获取</button>
         </div>

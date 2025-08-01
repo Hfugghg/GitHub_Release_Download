@@ -613,3 +613,13 @@ body {
     vertical-align: middle; /* 垂直对齐 */
     filter: invert(1); /* 将黑色图标反转为白色，以便在深色背景上显示 */
 }
+
+.qq-btn {
+    background-color: #55acee; /* QQ 品牌色 */
+    color: white;
+}
+.qq-btn img {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+}

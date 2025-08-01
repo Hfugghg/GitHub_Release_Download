@@ -406,6 +406,17 @@
         }
     });
 
+    // 在页面加载完成后为 QQ 群按钮添加点击事件
+    document.addEventListener("DOMContentLoaded", function() {
+        const qqGroupBtn = document.getElementById("qqGroupBtn");
+
+        if (qqGroupBtn) {
+            qqGroupBtn.addEventListener("click", function() {
+                window.open("https://qm.qq.com/cgi-bin/qm/qr?k=8RSIIQ7Nb5x9ZsAX_r5fd6qNVYC3RkEZ&jump_from=webapi&authKey=n4nN5cC6tJ7PBr1vVQG4XZon7dynMUyhWfbVAcCu2slbUQv+QUnjmaoNIvRaaqaJ", "_blank");
+            });
+        }
+    });
+
 
     // --- 初始化 ---
     function initialize() {
