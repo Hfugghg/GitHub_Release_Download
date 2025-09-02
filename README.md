@@ -32,10 +32,6 @@
   <img src="https://img.shields.io/badge/QQ%E7%BE%A4-点击加入-blue" alt="加入QQ群">
 </a>
 
-## 截图
-
-![截图](https://hfugghg.github.io/GitHub_Release_Download/screenshot.png)
-
 ## 注意事项
 
 * 本工具仅为方便下载而制作，所有文件均直接从 GitHub 服务器下载。
