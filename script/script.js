@@ -532,21 +532,75 @@
     // 在页面加载完成后为 QQ 群按钮添加点击事件
     document.addEventListener("DOMContentLoaded", function() {
         const qqGroupBtn = document.getElementById("qqGroupBtn");
+        if (!qqGroupBtn) return;
 
-        if (qqGroupBtn) {
-            qqGroupBtn.addEventListener("click", function() {
-                // 通过 User Agent 判断是否为移动设备
-                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        // --- 1. 配置中心：将链接和参数集中管理 ---
+        const qqLinkConfig = {
+            groupUin: "895166848",
+            // 【重要】PC链接，保留了您提供的authKey，但请阅读下方关于它的说明
+            pc: "https://qm.qq.com/cgi-bin/qm/qr?k=8RSIIQ7Nb5x9ZsAX_r5fd6qNVYC3RkEZ&jump_from=webapi&authKey=n4nN5cC6tJ7PBr1vVQG4XZon7dynMUyhWfbVAcCu2slbUQv+QUnjmaoNIvRaaqaJ",
+            // 移动端scheme，使用模板字符串动态生成
+            mobileScheme: `mqqapi://card/show_pslcard?src_type=app&version=1&uin=895166848&card_type=group&source=webapi`,
+            // 失败后备的下载链接
+            appstore: "itms-apps://itunes.apple.com/cn/app/qq-2011/id444934666?mt=8",
+            androidDownload: "//im.qq.com" // 通用下载页
+        };
 
-                if (isMobile) {
-                    // 如果是移动设备，则跳转到能直接拉起 QQ 的链接
-                    window.location.href = "mqqapi://card/show_pslcard?src_type=app&version=1&uin=895166848&card_type=group&source=webapi";
-                } else {
-                    // 如果是电脑，则打开通常的加群二维码页面
-                    window.open("https://qm.qq.com/cgi-bin/qm/qr?k=8RSIIQ7Nb5x9ZsAX_r5fd6qNVYC3RkEZ&jump_from=webapi&authKey=n4nN5cC6tJ7PBr1vVQG4XZon7dynMUyhWfbVAcCu2slbUQv+QUnjmaoNIvRaaqaJ", "_blank");
-                }
-            });
+        // --- 2. 环境侦测：精确识别方法 ---
+        function getEnvironment() {
+            const ua = navigator.userAgent;
+            if (/MicroMessenger/i.test(ua)) {
+                return 'wechat';
+            }
+            if (/Android/i.test(ua)) {
+                return 'android';
+            }
+            if (/iPhone|iPad|iPod/i.test(ua)) {
+                return 'ios';
+            }
+            return 'pc';
         }
+
+        // --- 3. 核心跳转逻辑：综合多种方案 ---
+        qqGroupBtn.addEventListener("click", function() {
+            const env = getEnvironment();
+
+            switch (env) {
+                case 'wechat':
+                    // 在微信中，不尝试跳转，而是弹出提示层
+                    const overlay = document.getElementById("wechatOverlay");
+                    if (overlay) {
+                        overlay.style.display = "block";
+                        overlay.onclick = function() { this.style.display = "none"; };
+                    }
+                    break;
+
+                case 'android':
+                case 'ios':
+                    // “超时判断”后备方案
+                    const startTime = Date.now();
+                    const downloadUrl = (env === 'ios') ? qqLinkConfig.appstore : qqLinkConfig.androidDownload;
+
+                    // 尝试通过修改 location.href 唤醒APP
+                    window.location.href = qqLinkConfig.mobileScheme;
+
+                    setTimeout(() => {
+                        // 设置一个延时。如果2秒后页面还在，说明APP没有被成功唤醒
+                        // document.hidden 是一个更可靠的判断页面是否可见的属性
+                        if (!document.hidden && Date.now() - startTime < 2500) {
+                            // 跳转到应用商店或下载页面
+                            window.location.href = downloadUrl;
+                        }
+                    }, 2000);
+                    break;
+
+                case 'pc':
+                default:
+                    // 电脑端，直接在新标签页打开
+                    window.open(qqLinkConfig.pc, "_blank");
+                    break;
+            }
+        });
     });
 
 
