@@ -22,11 +22,16 @@
     const releaseBody = document.getElementById('releaseBody'); // 发布正文
     const downloadAssetsContainer = document.getElementById('downloadAssets'); // 下载资源容器
     const assetList = document.getElementById('assetList'); // 资源列表
+    const historyBtn = document.getElementById('historyBtn'); // 历史版本按钮
+    const historyContainer = document.getElementById('historyContainer'); // 历史版本容器
+    const releaseSelector = document.getElementById('releaseSelector'); // 历史版本选择器
+    const viewOnGithubBtn = document.getElementById('viewOnGithubBtn'); // 打开GitHub官方列表按钮
     let timeoutId;
     let errorDisplayed = false; // 控制错误信息是否已显示
     let selectedIndex = -1; // 记录选中项的索引
 
     let currentRepo = null; // 用于跟踪当前激活的仓库按钮
+    let currentRepoInfo = { owner: null, repo: null }; // 用于存储当前仓库的所有者和名称
 
     // --- 辅助函数 ---
 
@@ -95,12 +100,14 @@
 
     // --- UI 更新函数 ---
 
-    function showLoading(message = '正在获取信息...') {
+    function showLoading(message = '正在获取信息...', keepReleaseInfoVisible = false) {
         spinner.style.display = 'block';
         statusTitle.textContent = message;
         statusText.textContent = '';
         statusText.className = 'status-text'; // 重置错误类
-        releaseInfoContainer.style.display = 'none';
+        if (!keepReleaseInfoVisible) {
+            releaseInfoContainer.style.display = 'none';
+        }
         downloadAssetsContainer.style.display = 'none';
         assetList.innerHTML = ''; // 清除之前的资源
         releaseBody.innerHTML = ''; // 清除之前的说明
@@ -113,13 +120,25 @@
         statusText.className = 'status-text error'; // 添加错误类
         releaseInfoContainer.style.display = 'none';
         downloadAssetsContainer.style.display = 'none';
+        historyBtn.style.display = 'none';
+        historyContainer.style.display = 'none';
+        viewOnGithubBtn.style.display = 'none';
     }
 
     function showSuccess(repoIdentifier, data) {
         spinner.style.display = 'none'; // 隐藏加载指示器
         statusTitle.textContent = `✅ ${repoIdentifier} - ${data.tag_name}`; // 设置状态标题，显示仓库标识和标签名称
-        statusText.textContent = `最新版本发布于: ${formatDate(data.published_at)}`; // 设置状态文本，显示最新版本发布日期
+        statusText.textContent = `版本发布于: ${formatDate(data.published_at)}`; // 设置状态文本，显示最新版本发布日期
         statusText.className = 'status-text'; // 设置状态文本的CSS类名
+
+        // 设置历史版本按钮
+        historyBtn.style.display = 'inline-block';
+        historyContainer.style.display = 'none';
+
+        // 设置 GitHub 官方页面链接
+        const releasesUrl = `https://github.com/${repoIdentifier}/releases`;
+        viewOnGithubBtn.href = releasesUrl;
+        viewOnGithubBtn.style.display = 'inline-block';
 
         if (data.body) {
             releaseBody.innerHTML = markdownToHtml(data.body, repoIdentifier);
@@ -177,6 +196,7 @@
 
     function fetchLatestRelease(owner, repoName) {
         const repoIdentifier = `${owner}/${repoName}`;
+        currentRepoInfo = { owner: owner, repo: repoName };
         showLoading(`正在获取 ${repoIdentifier} 的最新版本...`);
 
         const apiUrl = `https://api.github.com/repos/${owner}/${repoName}/releases/latest`;
@@ -204,6 +224,94 @@
             .catch(error => {
                 console.error('Fetch 错误:', error);
                 showError('获取失败', error.message);
+            });
+    }
+
+    function fetchReleaseHistory(owner, repo) {
+        const repoIdentifier = `${owner}/${repo}`;
+        showLoading(`正在获取 ${repoIdentifier} 的历史版本...`, true);
+
+        const apiUrl = `https://api.github.com/repos/${owner}/${repo}/releases`;
+
+        fetch(apiUrl)
+            .then(response => {
+                if (response.status === 404) {
+                    throw new Error(`仓库 "${repoIdentifier}" 未找到或没有发布版本。`);
+                }
+                if (response.status === 403) {
+                    throw new Error('GitHub API 访问频率限制。请稍后再试。');
+                }
+                if (!response.ok) {
+                    throw new Error(`网络响应错误: ${response.status} ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(releases => {
+                if (releases && releases.length > 0) {
+                    populateReleaseHistory(releases);
+                } else {
+                    showError('未找到历史版本', '该仓库没有发布任何版本。');
+                }
+            })
+            .catch(error => {
+                console.error('Fetch History 错误:', error);
+                showError('获取历史版本失败', error.message);
+            });
+    }
+
+    function populateReleaseHistory(releases) {
+        releaseSelector.innerHTML = ''; // 清空之前的选项
+        historyContainer.style.display = 'block';
+
+        const defaultOption = document.createElement('option');
+        defaultOption.textContent = '--- 请选择一个历史版本 ---';
+        defaultOption.disabled = true;
+        defaultOption.selected = true;
+        releaseSelector.appendChild(defaultOption);
+
+        releases.forEach(release => {
+            const option = document.createElement('option');
+            option.value = release.tag_name;
+            option.textContent = `${release.tag_name} - 发布于: ${formatDate(release.published_at)}`;
+            releaseSelector.appendChild(option);
+        });
+
+        spinner.style.display = 'none';
+        releaseInfoContainer.style.display = 'block';
+        downloadAssetsContainer.style.display = 'none';
+        releaseBody.innerHTML = ''; // 清空发布说明
+        statusTitle.textContent = `✅ 找到 ${releases.length} 个历史版本`;
+        statusText.textContent = '请从下拉列表中选择一个版本进行查看。';
+    }
+
+    function fetchReleaseByTag(owner, repo, tagName) {
+        const repoIdentifier = `${owner}/${repo}`;
+        showLoading(`正在获取版本 ${tagName}...`, true);
+
+        const apiUrl = `https://api.github.com/repos/${owner}/${repo}/releases/tags/${tagName}`;
+
+        fetch(apiUrl)
+            .then(response => {
+                if (response.status === 404) {
+                    throw new Error(`版本 "${tagName}" 未找到。`);
+                }
+                if (response.status === 403) {
+                    throw new Error('GitHub API 访问频率限制。请稍后再试。');
+                }
+                if (!response.ok) {
+                    throw new Error(`网络响应错误: ${response.status} ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                showSuccess(repoIdentifier, data);
+                // 修改说明:
+                // 此处原有的 historyContainer.style.display = 'block'; 和 releaseSelector.value = tagName; 已被移除。
+                // showSuccess 函数会自动隐藏历史版本选择框，从而实现您的需求。
+            })
+            .catch(error => {
+                console.error('Fetch by Tag 错误:', error);
+                showError(`获取版本 ${tagName} 失败`, error.message);
             });
     }
 
@@ -403,6 +511,21 @@
                     }
                 }
             }
+        }
+    });
+
+    historyBtn.addEventListener('click', () => {
+        if (currentRepoInfo.owner && currentRepoInfo.repo) {
+            fetchReleaseHistory(currentRepoInfo.owner, currentRepoInfo.repo);
+        } else {
+            showError('错误', '无法确定当前仓库。');
+        }
+    });
+
+    releaseSelector.addEventListener('change', (event) => {
+        const selectedTag = event.target.value;
+        if (selectedTag && currentRepoInfo.owner && currentRepoInfo.repo) {
+            fetchReleaseByTag(currentRepoInfo.owner, currentRepoInfo.repo, selectedTag);
         }
     });
 

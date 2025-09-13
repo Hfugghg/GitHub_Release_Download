@@ -41,7 +41,14 @@
     </div>
 
     <div class="release-info" id="releaseInfo">
-        <h3>版本说明</h3>
+        <h3>
+            版本说明
+            <button class="btn" id="historyBtn" style="display: none; margin-left: 10px;">查看历史版本</button>
+            <a href="#" id="viewOnGithubBtn" class="btn" target="_blank" rel="noopener noreferrer" style="display: none; margin-left: 8px;">打开官方列表</a>
+        </h3>
+        <div id="historyContainer" style="display: none; margin-top: 10px;">
+            <select id="releaseSelector" style="width: 100%;"></select>
+        </div>
         <div class="release-body" id="releaseBody">
         </div>
     </div>
