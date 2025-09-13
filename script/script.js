@@ -578,20 +578,28 @@
                 case 'android':
                 case 'ios':
                     // “超时判断”后备方案
-                    const startTime = Date.now();
                     const downloadUrl = (env === 'ios') ? qqLinkConfig.appstore : qqLinkConfig.androidDownload;
 
-                    // 尝试通过修改 location.href 唤醒APP
+                    // 1. 设置一个后备定时器，并保存其ID
+                    const timer = setTimeout(() => {
+                        // 这个定时器只有在跳转失败、用户仍停留在页面时才会执行
+                        window.location.href = downloadUrl;
+                    }, 2500);
+
+                    // 2. 监听 visibilitychange 事件
+                    const visibilityChangeHandler = () => {
+                        // 当页面变为不可见（用户切换到QQ或其他应用），
+                        // 我们就认为跳转成功了，并立即清除后备定时器。
+                        if (document.hidden) {
+                            clearTimeout(timer);
+                            window.removeEventListener('visibilitychange', visibilityChangeHandler);
+                        }
+                    };
+                    window.addEventListener('visibilitychange', visibilityChangeHandler);
+
+                    // 3. 执行跳转
                     window.location.href = qqLinkConfig.mobileScheme;
 
-                    setTimeout(() => {
-                        // 设置一个延时。如果2秒后页面还在，说明APP没有被成功唤醒
-                        // document.hidden 是一个更可靠的判断页面是否可见的属性
-                        if (!document.hidden && Date.now() - startTime < 2500) {
-                            // 跳转到应用商店或下载页面
-                            window.location.href = downloadUrl;
-                        }
-                    }, 2000);
                     break;
 
                 case 'pc':
