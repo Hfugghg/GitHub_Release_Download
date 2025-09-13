@@ -535,7 +535,16 @@
 
         if (qqGroupBtn) {
             qqGroupBtn.addEventListener("click", function() {
-                window.open("https://qm.qq.com/cgi-bin/qm/qr?k=8RSIIQ7Nb5x9ZsAX_r5fd6qNVYC3RkEZ&jump_from=webapi&authKey=n4nN5cC6tJ7PBr1vVQG4XZon7dynMUyhWfbVAcCu2slbUQv+QUnjmaoNIvRaaqaJ", "_blank");
+                // 通过 User Agent 判断是否为移动设备
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+                if (isMobile) {
+                    // 如果是移动设备，则跳转到能直接拉起 QQ 的链接
+                    window.location.href = "mqqapi://card/show_pslcard?src_type=app&version=1&uin=895166848&card_type=group&source=webapi";
+                } else {
+                    // 如果是电脑，则打开通常的加群二维码页面
+                    window.open("https://qm.qq.com/cgi-bin/qm/qr?k=8RSIIQ7Nb5x9ZsAX_r5fd6qNVYC3RkEZ&jump_from=webapi&authKey=n4nN5cC6tJ7PBr1vVQG4XZon7dynMUyhWfbVAcCu2slbUQv+QUnjmaoNIvRaaqaJ", "_blank");
+                }
             });
         }
     });
