@@ -623,3 +623,83 @@ body {
     height: 20px;
     margin-right: 8px;
 }
+
+/* --- 历史版本选择 --- */
+#historyContainer {
+    margin-top: 1rem;
+    /* 上外边距 */
+}
+
+#releaseSelector {
+    width: 100%;
+    /* 宽度 */
+    padding: 10px 15px;
+    /* 内边距 */
+    border: 1px solid var(--medium-gray);
+    /* 边框 */
+    border-radius: 20px;
+    /* 边框圆角 */
+    font-size: 0.95rem;
+    /* 字体大小 */
+    background-color: #fff;
+    /* 背景颜色 */
+    color: var(--text-color);
+    /* 文本颜色 */
+    cursor: pointer;
+    /* 鼠标指针样式 */
+    -webkit-appearance: none;
+    /* 移除默认样式 (for Safari/Chrome) */
+    -moz-appearance: none;
+    /* 移除默认样式 (for Firefox) */
+    appearance: none;
+    /* 移除默认样式 */
+    /* 添加自定义下拉箭头，颜色与主题匹配 */
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236c5ce7%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    /* 背景不重复 */
+    background-position: right 20px center;
+    /* 箭头位置 */
+    background-size: 10px;
+    /* 箭头大小 */
+    padding-right: 40px;
+    /* 为箭头图标留出空间 */
+}
+
+#releaseSelector:hover {
+    border-color: var(--primary-color);
+    /* 悬停时边框颜色变化 */
+}
+
+/* 历史版本按钮的样式 */
+#historyBtn {
+    background-color: var(--secondary-color);
+    /* 使用次要颜色 */
+    color: white;
+    font-weight: 500;
+    /* 字体粗细 */
+    padding: 5px 12px;
+    /* 调整内边距使其更紧凑 */
+    font-size: 0.85rem;
+    /* 调整字体大小 */
+    vertical-align: middle;
+    /* 与标题文字垂直对齐 */
+}
+
+#historyBtn:hover {
+    background-color: var(--primary-color);
+    /* 悬停时使用主要颜色 */
+}
+
+/* 官方 Release 列表按钮样式 */
+#viewOnGithubBtn {
+    background-color: #333; /* GitHub 常用黑色 */
+    color: white;
+    padding: 5px 12px; /* 与历史按钮的内边距对齐 */
+    font-size: 0.85rem; /* 与历史按钮的字体大小对齐 */
+    vertical-align: middle; /* 与标题文字垂直对齐 */
+    text-decoration: none; /* 确保链接没有下划线 */
+}
+
+#viewOnGithubBtn:hover {
+    background-color: #555; /* 悬停时颜色变亮 */
+}
