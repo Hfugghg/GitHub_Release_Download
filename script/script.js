@@ -27,6 +27,8 @@
     const historyContainer = document.getElementById('historyContainer'); // 历史版本容器
     const releaseSelector = document.getElementById('releaseSelector'); // 历史版本选择器
     const viewOnGithubBtn = document.getElementById('viewOnGithubBtn'); // 打开GitHub官方列表按钮
+    const themeToggleButton = document.getElementById('theme-toggle-btn'); // 主题切换按钮
+    const themeIcon = document.getElementById('theme-icon'); // 主题图标
     let timeoutId;
     let errorDisplayed = false; // 控制错误信息是否已显示
     let selectedIndex = -1; // 记录选中项的索引
@@ -34,6 +36,31 @@
     let currentRepo = null; // 用于跟踪当前激活的仓库按钮
     let currentRepoInfo = { owner: null, repo: null }; // 用于存储当前仓库的所有者和名称
     let currentAssets = []; // 用于存储当前版本的完整文件列表
+
+    // --- 主题切换 ---
+    const sunIcon = 'https://www.svgrepo.com/show/527250/moon-sleep.svg';
+    const moonIcon = 'https://www.svgrepo.com/show/449918/sun.svg';
+
+    function setTheme(theme, savePreference = false) {
+        if (theme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            themeIcon.src = moonIcon;
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            themeIcon.src = sunIcon;
+        }
+        if (savePreference) {
+            localStorage.setItem('theme', theme);
+        }
+    }
+
+    // 主题切换按钮点击事件
+    themeToggleButton.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        // 用户手动切换，保存其偏好
+        setTheme(currentTheme === 'dark' ? 'light' : 'dark', true);
+    });
+
 
     // --- 辅助函数 ---
 
@@ -574,6 +601,28 @@
             button.addEventListener('click', handlePredefinedRepoClick);
             predefinedReposContainer.appendChild(button);
         });
+
+        // 初始化主题
+        const savedTheme = localStorage.getItem('theme'); // 检查本地是否存有用户偏好
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+        if (savedTheme) {
+            // 如果用户已手动设置主题，则应用该主题
+            setTheme(savedTheme);
+        } else {
+            // 否则，跟随操作系统的深色模式设置
+            setTheme(prefersDark.matches ? 'dark' : 'light');
+        }
+
+        // 监听操作系统主题变化
+        if (prefersDark.addEventListener) {
+            prefersDark.addEventListener('change', (event) => {
+                // 仅当用户未手动设置主题时，才跟随系统主题变化
+                if (!localStorage.getItem('theme')) {
+                    setTheme(event.matches ? 'dark' : 'light');
+                }
+            });
+        }
     }
 
     initialize();
