@@ -397,6 +397,26 @@ body {
     /* 居中显示 '下载文件' 标题 */
 }
 
+/*搜索框样式*/
+.search-container {
+    margin-bottom: 1rem;
+}
+
+#assetSearchInput {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid var(--medium-gray);
+    border-radius: 20px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#assetSearchInput:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+}
+
 .asset-item {
     background-color: #fff;
     border: 1px solid var(--light-gray);
