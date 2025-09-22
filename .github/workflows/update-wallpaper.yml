@@ -77,26 +77,18 @@ jobs:
           COUNT=1
           JSON_INDEX="[]"
 
-          # 使用 jq -c 将每个图片对象作为单独一行输出，方便 shell 循环处理
-          jq -c '.data[]' api_response.json | while read -r image_json; do
-            # 从单行 JSON 中提取图片路径
+          while read -r image_json; do
             PATH_URL=$(echo "$image_json" | jq -r '.path')
-          
-            # 提取文件扩展名 (jpg, png, etc.)
             EXTENSION="${PATH_URL##*.}"
-          
-            # 使用 printf 格式化文件名，确保数字是两位数（如 01, 02）
             NEW_FILENAME=$(printf "wallpaper_%02d.%s" "$COUNT" "$EXTENSION")
           
             echo "正在下载并重命名为 ${NEW_FILENAME} ..."
             curl -s -o "assets/gallery/${NEW_FILENAME}" "$PATH_URL"
           
-            # 将新的文件名追加到我们的 JSON 数组字符串中
             JSON_INDEX=$(echo "$JSON_INDEX" | jq --arg file "$NEW_FILENAME" '. + [$file]')
           
-            # 计数器加一
             COUNT=$((COUNT + 1))
-          done
+          done < <(jq -c '.data[]' api_response.json)
           
           echo "创建包含新文件名的画廊索引文件..."
           # 循环结束后，将最终的 JSON 字符串写入文件
