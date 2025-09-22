@@ -18,22 +18,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 步骤一：首次 API 请求，只为获取总页数
       - name: Get Max Page Number (Meta Call)
         id: get_meta
         run: |
-          LAST_PAGE=$(curl -s "https://wallhaven.cc/api/v1/search?sorting=toplist&topRange=1M&purity=100" | jq '.meta.last_page')
+          # [!] 已更新此处的 API 链接
+          LAST_PAGE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=1M&purity=100" | jq '.meta.last_page')
           echo "热门列表总页数: $LAST_PAGE"
           echo "LAST_PAGE=${LAST_PAGE}" >> $GITHUB_OUTPUT
 
+      # 步骤二：生成随机页码并获取该页的图片数据
       - name: Fetch Random Page of Wallpapers (Data Call)
         id: get_data
         run: |
           MAX_PAGE=${{ steps.get_meta.outputs.LAST_PAGE }}
           
-          # 检查 MAX_PAGE 是否有效，防止第一步API调用失败
           if [[ -z "$MAX_PAGE" || "$MAX_PAGE" == "null" || "$MAX_PAGE" -lt 1 ]]; then
             echo "错误：无法获取有效的总页数。跳过本次更新。"
-            # 设置一个标志位，让后续步骤可以跳过
             echo "SKIP=true" >> $GITHUB_OUTPUT
             exit 0
           fi
@@ -48,19 +49,18 @@ jobs:
           fi
           
           echo "最终选择的随机页码: $FINAL_PAGE"
-          curl -s "https://wallhaven.cc/api/v1/search?sorting=toplist&topRange=1M&purity=100&page=${FINAL_PAGE}" -o api_response.json
+          # [!] 已更新此处的 API 链接
+          curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=1M&purity=100&page=${FINAL_PAGE}" -o api_response.json
           echo "已获取第 ${FINAL_PAGE} 页的壁纸数据。"
 
+      # 步骤三：处理和下载壁纸
       - name: Process and Download Wallpapers
-        # 只有当上一步没有设置 SKIP=true 标志时才运行
         if: steps.get_data.outputs.SKIP != 'true'
         run: |
-          # --- 新增的安全检查 ---
-          # 检查 API 响应中 data 数组的长度。如果长度为0或不存在，则说明没有图片数据。
           DATA_LENGTH=$(jq '.data | length' api_response.json)
           if [[ -z "$DATA_LENGTH" || "$DATA_LENGTH" -eq 0 ]]; then
             echo "错误：API 响应中没有找到有效的图片数据。跳过本次更新。"
-            exit 0 # 正常退出，不执行后续步骤
+            exit 0
           fi
 
           echo "清理旧画廊..."
@@ -88,8 +88,8 @@ jobs:
           echo "创建画廊索引文件..."
           jq '[.data[] | .id + "." + (.path | split(".") | last)]' api_response.json > assets/gallery/index.json
 
+      # 步骤四：提交并推送
       - name: Commit and Push new gallery
-        # 同样，只有在未跳过的情况下才运行
         if: steps.get_data.outputs.SKIP != 'true'
         run: |
           git config --global user.name 'github-actions[bot]'
