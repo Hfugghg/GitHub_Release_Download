@@ -1,0 +1,72 @@
+# .github/workflows/update-wallpaper.yml
+
+name: Update Wallpaper Gallery
+
+on:
+  schedule:
+    # 每小时运行一次
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  update-gallery:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fetch API data
+        run: curl -s "https://wallhaven.cc/api/v1/search?categories=010&purity=100&sorting=random" -o api_response.json
+
+      - name: Process and Download Wallpapers
+        run: |
+          # 1. 清理旧的画廊，为新图片做准备
+          echo "清理旧画廊..."
+          rm -rf assets/gallery
+          mkdir -p assets/gallery
+
+          # 2. 智能选择一张横屏图片作为主背景
+          #   - .ratio | tonumber > 1.2: 筛选出宽高比大于 1.2 的图片 (确保是明显的横屏)
+          #   - head -n 1: 只取第一个符合条件的
+          #   - jq -r '...' api_response.json: 从文件中读取并处理
+          MAIN_BG_URL=$(jq -r '.data[] | select((.ratio | tonumber) > 1.2) | .path' api_response.json | head -n 1)
+
+          # 如果没有找到合适的横屏图，就用第一张作为备选
+          if [ -z "$MAIN_BG_URL" ]; then
+            echo "未找到理想的横屏壁纸，使用第一张作为主背景。"
+            MAIN_BG_URL=$(jq -r '.data[0].path' api_response.json)
+          else
+            echo "已选择横屏壁纸作为主背景: $MAIN_BG_URL"
+          fi
+          
+          # 下载主背景图
+          curl -o assets/background.jpg "$MAIN_BG_URL"
+
+          # 3. 下载所有图片到画廊
+          echo "开始下载所有图片到画廊..."
+          jq -r '.data[] | "\(.id) \(.path)"' api_response.json | while read -r id path; do
+            # 从 path 中提取文件扩展名 (jpg, png, etc.)
+            extension="${path##*.}"
+            filename="${id}.${extension}"
+            echo "正在下载 $filename ..."
+            curl -s -o "assets/gallery/${filename}" "$path"
+          done
+          
+          # 4. 创建画廊索引文件
+          # 生成一个 JSON 数组，包含所有画廊图片的文件名
+          jq '[.data[] | .id + "." + (.path | split(".") | last)]' api_response.json > assets/gallery/index.json
+          echo "画廊索引文件 'assets/gallery/index.json' 已创建。"
+
+      - name: Commit and Push new gallery
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          # 添加整个 assets 目录的变动
+          git add assets/
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "feat: Update wallpaper gallery"
+            git push
+            echo "壁纸画廊已更新并推送至仓库。"
+          else
+            echo "壁纸没有变化，无需推送。"
+          fi
