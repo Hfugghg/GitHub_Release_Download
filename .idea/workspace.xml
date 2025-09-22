@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="831429d2-0f6c-4104-a88b-b0721c1fe32a" name="更改" comment="添加主题切换">
+      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/script/script.js" beforeDir="false" afterPath="$PROJECT_DIR$/script/script.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/style/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/style/style.css" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="CSS File" />
+        <option value="JavaScript File" />
+        <option value="HTML File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Hfugghg&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Hfugghg/GitHub_Release_Download.git&quot;,
+    &quot;accountId&quot;: &quot;e4c63407-12ae-4dfc-9e32-193e624c1e15&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2
+}</component>
+  <component name="ProjectId" id="30cpXfjgxwAlvRDlPL8caKrH5AO" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "D:/uniapp/new/Han1meViewer",
+    "list.type.of.created.stylesheet": "CSS",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-bf35d07a577b-intellij.indexing.shared.core-IU-252.23892.409" />
+        <option value="bundled-js-predefined-d6986cc7102b-e03c56caf84a-JavaScript-IU-252.23892.409" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="应用程序级" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="默认任务">
+      <changelist id="831429d2-0f6c-4104-a88b-b0721c1fe32a" name="更改" comment="" />
+      <created>1753936756214</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1753936756214</updated>
+      <workItem from="1753936757563" duration="6174000" />
+      <workItem from="1753953629780" duration="21000" />
+      <workItem from="1754008824595" duration="1628000" />
+      <workItem from="1755245886773" duration="68000" />
+      <workItem from="1756805700801" duration="626000" />
+      <workItem from="1756869697719" duration="60000" />
+      <workItem from="1757766580636" duration="5374000" />
+      <workItem from="1757774513802" duration="1870000" />
+      <workItem from="1757896003008" duration="433000" />
+      <workItem from="1757925987060" duration="704000" />
+      <workItem from="1758069490457" duration="1228000" />
+      <workItem from="1758078349449" duration="10607000" />
+      <workItem from="1758096391105" duration="2209000" />
+      <workItem from="1758155349398" duration="7000" />
+      <workItem from="1758505494187" duration="7697000" />
+      <workItem from="1758520910511" duration="2916000" />
+    </task>
+    <task id="LOCAL-00001" summary="更新了项目结构">
+      <option name="closed" value="true" />
+      <created>1753942153219</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1753942153219</updated>
+    </task>
+    <task id="LOCAL-00002" summary="整理代码缩进">
+      <option name="closed" value="true" />
+      <created>1753943038725</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1753943038725</updated>
+    </task>
+    <task id="LOCAL-00003" summary="增加群联系方式">
+      <option name="closed" value="true" />
+      <created>1754010210453</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1754010210454</updated>
+    </task>
+    <task id="LOCAL-00004" summary="添加了查看历史Release的按钮和打开GitHub官方Release列表的按钮。">
+      <option name="closed" value="true" />
+      <created>1757769172933</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1757769172933</updated>
+    </task>
+    <task id="LOCAL-00005" summary="更新了readme">
+      <option name="closed" value="true" />
+      <created>1757769929856</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1757769929856</updated>
+    </task>
+    <task id="LOCAL-00006" summary="更新了群链接">
+      <option name="closed" value="true" />
+      <created>1757772279694</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1757772279694</updated>
+    </task>
+    <task id="LOCAL-00007" summary="更新了加群逻辑">
+      <option name="closed" value="true" />
+      <created>1757775333060</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1757775333060</updated>
+    </task>
+    <task id="LOCAL-00008" summary="更新了加群逻辑">
+      <option name="closed" value="true" />
+      <created>1757775770133</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1757775770133</updated>
+    </task>
+    <task id="LOCAL-00009" summary="增加了文件搜索框和对应的逻辑">
+      <option name="closed" value="true" />
+      <created>1758081095137</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1758081095137</updated>
+    </task>
+    <task id="LOCAL-00010" summary="添加主题切换">
+      <option name="closed" value="true" />
+      <created>1758095006917</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1758095006917</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="更新了项目结构" />
+    <MESSAGE value="整理代码缩进" />
+    <MESSAGE value="增加群联系方式" />
+    <MESSAGE value="添加了查看历史Release的按钮和打开GitHub官方Release列表的按钮。" />
+    <MESSAGE value="更新了readme" />
+    <MESSAGE value="更新了群链接" />
+    <MESSAGE value="更新了加群逻辑" />
+    <MESSAGE value="增加了文件搜索框和对应的逻辑" />
+    <MESSAGE value="添加主题切换" />
+    <option name="LAST_COMMIT_MESSAGE" value="添加主题切换" />
+  </component>
+</project>

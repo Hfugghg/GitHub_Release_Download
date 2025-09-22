@@ -29,6 +29,10 @@
     const viewOnGithubBtn = document.getElementById('viewOnGithubBtn'); // 打开GitHub官方列表按钮
     const themeToggleButton = document.getElementById('theme-toggle-btn'); // 主题切换按钮
     const themeIcon = document.getElementById('theme-icon'); // 主题图标
+    const downloadPromptOverlay = document.getElementById('download-prompt-overlay');
+    const promptConfirmBtn = document.getElementById('prompt-confirm-btn');
+    const promptDontShowAgain = document.getElementById('prompt-dont-show-again');
+
     let timeoutId;
     let errorDisplayed = false; // 控制错误信息是否已显示
     let selectedIndex = -1; // 记录选中项的索引
@@ -36,6 +40,7 @@
     let currentRepo = null; // 用于跟踪当前激活的仓库按钮
     let currentRepoInfo = { owner: null, repo: null }; // 用于存储当前仓库的所有者和名称
     let currentAssets = []; // 用于存储当前版本的完整文件列表
+    let pendingDownloadUrl = null; // 用于存储待下载的链接
 
     // --- 主题切换 ---
     const sunIcon = 'https://www.svgrepo.com/show/527250/moon-sleep.svg';
@@ -530,6 +535,44 @@
             asset.name.toLowerCase().includes(searchTerm)
         );
         displayAssets(filteredAssets);
+    });
+
+    // --- 下载提示弹窗逻辑 ---
+    assetList.addEventListener('click', function(event) {
+        const target = event.target;
+        const downloadButton = target.closest('.download-btn');
+
+        if (downloadButton) {
+            event.preventDefault(); // 阻止链接的默认跳转行为
+
+            const downloadUrl = downloadButton.href;
+            const hidePrompt = localStorage.getItem('hideDownloadPrompt') === 'true';
+
+            if (hidePrompt) {
+                // 如果用户选择不再提示，则直接打开下载链接
+                window.open(downloadUrl, '_blank');
+            } else {
+                // 否则，显示提示弹窗
+                pendingDownloadUrl = downloadUrl;
+                downloadPromptOverlay.style.display = 'flex';
+            }
+        }
+    });
+
+    promptConfirmBtn.addEventListener('click', function() {
+        // 隐藏弹窗
+        downloadPromptOverlay.style.display = 'none';
+
+        // 如果用户勾选了“不再提示”，则保存到本地存储
+        if (promptDontShowAgain.checked) {
+            localStorage.setItem('hideDownloadPrompt', 'true');
+        }
+
+        // 继续下载
+        if (pendingDownloadUrl) {
+            window.open(pendingDownloadUrl, '_blank');
+            pendingDownloadUrl = null; // 清除已保存的链接
+        }
     });
 
     document.addEventListener("DOMContentLoaded", function() {
