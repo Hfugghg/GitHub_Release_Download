@@ -18,56 +18,77 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Fetch API data
-        run: curl -s "https://wallhaven.cc/api/v1/search?categories=010&purity=100&sorting=random" -o api_response.json
+      # 步骤一：首次 API 请求，只为获取总页数
+      - name: Get Max Page Number (Meta Call)
+        id: get_meta
+        run: |
+          # 我们从热门列表(toplist)的1个月(1M)范围里获取数据
+          # 使用 jq 工具提取 meta 信息中的 last_page 字段
+          LAST_PAGE=$(curl -s "https://wallhaven.cc/api/v1/search?sorting=toplist&topRange=1y&purity=100" | jq '.meta.last_page')
+          echo "热门列表总页数: $LAST_PAGE"
+          # 将总页数传递给后续步骤
+          echo "LAST_PAGE=${LAST_PAGE}" >> $GITHUB_OUTPUT
 
+      # 步骤二：生成随机页码并获取该页的图片数据
+      - name: Fetch Random Page of Wallpapers (Data Call)
+        id: get_data
+        run: |
+          MAX_PAGE=${{ steps.get_meta.outputs.LAST_PAGE }}
+          
+          # --- 核心算法：生成偏向小数字的随机页码 ---
+          # 我们生成两个1到MAX_PAGE的随机数，然后取其中较小的一个。
+          # 这样做会大大增加抽中前面页码的概率，符合你的要求。
+          RANDOM_PAGE_1=$(( RANDOM % MAX_PAGE + 1 ))
+          RANDOM_PAGE_2=$(( RANDOM % MAX_PAGE + 1 ))
+          
+          if [ "$RANDOM_PAGE_1" -lt "$RANDOM_PAGE_2" ]; then
+            FINAL_PAGE="$RANDOM_PAGE_1"
+          else
+            FINAL_PAGE="$RANDOM_PAGE_2"
+          fi
+          
+          echo "最终选择的随机页码: $FINAL_PAGE"
+          
+          # 使用最终的随机页码进行第二次 API 请求，并将结果保存到文件
+          curl -s "https://wallhaven.cc/api/v1/search?sorting=toplist&topRange=1M&purity=100&page=${FINAL_PAGE}" -o api_response.json
+          echo "已获取第 ${FINAL_PAGE} 页的壁纸数据。"
+
+      # 步骤三：处理和下载壁纸（这部分逻辑和之前一样）
       - name: Process and Download Wallpapers
         run: |
-          # 1. 清理旧的画廊，为新图片做准备
           echo "清理旧画廊..."
           rm -rf assets/gallery
           mkdir -p assets/gallery
 
-          # 2. 智能选择一张横屏图片作为主背景
-          #   - .ratio | tonumber > 1.2: 筛选出宽高比大于 1.2 的图片 (确保是明显的横屏)
-          #   - head -n 1: 只取第一个符合条件的
-          #   - jq -r '...' api_response.json: 从文件中读取并处理
+          echo "智能选择一张横屏图片作为主背景..."
           MAIN_BG_URL=$(jq -r '.data[] | select((.ratio | tonumber) > 1.2) | .path' api_response.json | head -n 1)
 
-          # 如果没有找到合适的横屏图，就用第一张作为备选
           if [ -z "$MAIN_BG_URL" ]; then
             echo "未找到理想的横屏壁纸，使用第一张作为主背景。"
             MAIN_BG_URL=$(jq -r '.data[0].path' api_response.json)
-          else
-            echo "已选择横屏壁纸作为主背景: $MAIN_BG_URL"
           fi
           
-          # 下载主背景图
           curl -o assets/background.jpg "$MAIN_BG_URL"
 
-          # 3. 下载所有图片到画廊
           echo "开始下载所有图片到画廊..."
           jq -r '.data[] | "\(.id) \(.path)"' api_response.json | while read -r id path; do
-            # 从 path 中提取文件扩展名 (jpg, png, etc.)
             extension="${path##*.}"
             filename="${id}.${extension}"
             echo "正在下载 $filename ..."
             curl -s -o "assets/gallery/${filename}" "$path"
           done
           
-          # 4. 创建画廊索引文件
-          # 生成一个 JSON 数组，包含所有画廊图片的文件名
+          echo "创建画廊索引文件..."
           jq '[.data[] | .id + "." + (.path | split(".") | last)]' api_response.json > assets/gallery/index.json
-          echo "画廊索引文件 'assets/gallery/index.json' 已创建。"
 
+      # 步骤四：提交并推送（和之前一样）
       - name: Commit and Push new gallery
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          # 添加整个 assets 目录的变动
           git add assets/
           if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "feat: Update wallpaper gallery"
+            git commit -m "feat(bot): Update wallpaper gallery from toplist"
             git push
             echo "壁纸画廊已更新并推送至仓库。"
           else
