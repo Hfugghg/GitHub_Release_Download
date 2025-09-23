@@ -24,8 +24,6 @@ jobs:
           # --- 配置 ---
           MAX_FILES_PER_FOLDER=100
           PAGES_TO_PROCESS=3
-          # DUPLICATE_THRESHOLD 变量已不再需要，但保留以供参考
-          DUPLICATE_THRESHOLD=0.7
 
           # --- 初始化 ---
           mkdir -p assets/landscape assets/portrait
@@ -36,26 +34,48 @@ jobs:
           echo "开始获取和过滤新的壁纸..."
           NEW_IMAGES_JSON="[]"
 
-          LAST_PAGE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=1M&purity=100" | jq '.meta.last_page')
+          # [变更 1] 将获取总页数的时间范围统一为 6M
+          LAST_PAGE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=6M&purity=100" | jq '.meta.last_page')
           if [[ -z "$LAST_PAGE" || "$LAST_PAGE" == "null" || "$LAST_PAGE" -lt 1 ]]; then
             echo "错误：无法获取有效的总页数。跳过本次更新。"
             exit 0
           fi
-          echo "壁纸总页数 (toplist/1M): $LAST_PAGE"
+          echo "壁纸总页数 (toplist/6M): $LAST_PAGE"
           
           for i in $(seq 1 $PAGES_TO_PROCESS); do
-            MIN_PAGE=$LAST_PAGE
-            for _ in $(seq 1 6); do
-              CURRENT_RANDOM_PAGE=$(( RANDOM % LAST_PAGE + 1 ))
-              if [ "$CURRENT_RANDOM_PAGE" -lt "$MIN_PAGE" ]; then
-                MIN_PAGE="$CURRENT_RANDOM_PAGE"
+            # [变更 2] 使用新的加权随机算法选择页面
+            echo "正在根据权重选择随机页面..."
+            PROB_ROLL=$(( RANDOM % 1000 + 1 )) # 生成一个 1 到 1000 的随机数
+
+            if [ "$PROB_ROLL" -le 800 ]; then
+              # 80% 的概率: 从第 1-10 页中选择
+              RANDOM_PAGE=$(( RANDOM % 10 + 1 ))
+              echo "权重命中范围 [1-10]，选中页面: ${RANDOM_PAGE}"
+            elif [ "$PROB_ROLL" -le 990 ]; then
+              # 19% 的概率: 从第 11-100 页中选择
+              UPPER_BOUND=$( [ "100" -lt "$LAST_PAGE" ] && echo "100" || echo "$LAST_PAGE" )
+              if [ "$UPPER_BOUND" -gt 10 ]; then
+                RANGE=$(( UPPER_BOUND - 10 ))
+                RANDOM_PAGE=$(( RANDOM % RANGE + 11 ))
+              else
+                RANDOM_PAGE=$(( RANDOM % 10 + 1 )) # 如果总页数小于11, 则回退到1-10页
               fi
-            done
-            RANDOM_PAGE="$MIN_PAGE"
+              echo "权重命中范围 [11-100]，选中页面: ${RANDOM_PAGE}"
+            else
+              # 1% 的概率: 从第 101 页到最后一页中选择
+              if [ "$LAST_PAGE" -gt 100 ]; then
+                RANGE=$(( LAST_PAGE - 100 ))
+                RANDOM_PAGE=$(( RANDOM % RANGE + 101 ))
+                echo "权重命中范围 [101-${LAST_PAGE}]，选中页面: ${RANDOM_PAGE}"
+              else
+                # 如果总页数小于101, 则从所有页面中随机选择作为回退
+                RANDOM_PAGE=$(( RANDOM % LAST_PAGE + 1 ))
+                echo "权重命中范围 [101+] (总页数不足，回退至 1-${LAST_PAGE})，选中页面: ${RANDOM_PAGE}"
+              fi
+            fi
+
+            echo "正在处理第 ${i}/${PAGES_TO_PROCESS} 次更新 (API Page: ${RANDOM_PAGE})..."
           
-            echo "正在处理第 ${i}/${PAGES_TO_PROCESS} 页 (API Page: ${RANDOM_PAGE})..."
-          
-            # [变更 2] 将热门列表时间范围从 1y 改为 6M
             API_RESPONSE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=6M&purity=100&page=${RANDOM_PAGE}")
             PAGE_IMAGES=$(echo "$API_RESPONSE" | jq -c '.data[]')
           
@@ -69,23 +89,12 @@ jobs:
             while read -r image_json; do
               IMAGE_ID=$(echo "$image_json" | jq -r '.id')
               if echo "$EXISTING_IDS" | grep -q "\"$IMAGE_ID\""; then
-                # 如果图片已存在，则跳过此图片
                 continue
               else
-                # 如果是新图片，则添加到本页的新图片列表中
                 FRESH_IMAGES_ON_PAGE=$(echo "$FRESH_IMAGES_ON_PAGE" | jq --argjson img "$image_json" '. + [$img]')
               fi
             done <<< "$PAGE_IMAGES"
 
-            # [变更 1] 移除重复率检查逻辑。
-            # 现在无论重复图片有多少，只要有新图片就会被处理。
-            # DUPLICATE_RATE=$(echo "scale=2; $DUPLICATES_ON_PAGE / $TOTAL_ON_PAGE" | bc)
-            # if (( $(echo "$DUPLICATE_RATE > $DUPLICATE_THRESHOLD" | bc -l) )); then
-            #   echo "警告：重复率 (${DUPLICATE_RATE}) 过高，放弃处理此页。"
-            #   continue
-            # fi
-
-            # 将本次找到的新图片ID，立刻加入到EXISTING_IDS中，防止同一次运行中重复添加
             FRESH_IDS=$(echo "$FRESH_IMAGES_ON_PAGE" | jq -r '.[] .id')
             EXISTING_IDS="${EXISTING_IDS}\n${FRESH_IDS}"
 
@@ -100,11 +109,8 @@ jobs:
           
           # --- 处理、排序和下载 ---
           echo "开始处理和下载 $(echo "$NEW_IMAGES_JSON" | jq 'length') 张新壁纸..."
-          # 采用更稳健的方式处理元数据
-          # 先读取旧的元数据
           OLD_LANDSCAPE_META=$(jq '.data // []' assets/landscape/meta.json)
           OLD_PORTRAIT_META=$(jq '.data // []' assets/portrait/meta.json)
-          # 将新的元数据收集到临时变量中
           NEW_LANDSCAPE_ENTRIES="[]"
           NEW_PORTRAIT_ENTRIES="[]"
 
@@ -131,7 +137,6 @@ jobs:
             fi
           done < <(echo "$NEW_IMAGES_JSON" | jq -c '.[]')
 
-          # 下载和分类完成后，一次性合并新旧元数据
           LANDSCAPE_META=$(jq -s '.[0] + .[1]' <(echo "$OLD_LANDSCAPE_META") <(echo "$NEW_LANDSCAPE_ENTRIES"))
           PORTRAIT_META=$(jq -s '.[0] + .[1]' <(echo "$OLD_PORTRAIT_META") <(echo "$NEW_PORTRAIT_ENTRIES"))
 
