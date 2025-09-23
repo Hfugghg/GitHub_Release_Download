@@ -25,7 +25,7 @@ jobs:
           echo "热门列表总页数: $LAST_PAGE"
           echo "LAST_PAGE=${LAST_PAGE}" >> $GITHUB_OUTPUT
 
-      - name: Fetch Random Page of Wallpapers (Data Call)
+      - name: Fetch 5 Random Pages of Wallpapers
         id: get_data
         run: |
           MAX_PAGE=${{ steps.get_meta.outputs.LAST_PAGE }}
@@ -36,21 +36,30 @@ jobs:
             exit 0
           fi
 
-          RANDOM_PAGE_1=$(( RANDOM % MAX_PAGE + 1 ))
-          RANDOM_PAGE_2=$(( RANDOM % MAX_PAGE + 1 ))
+          echo "开始随机获取 5 页壁纸数据..."
+          for i in {1..5}
+          do
+            RANDOM_PAGE_1=$(( RANDOM % MAX_PAGE + 1 ))
+            RANDOM_PAGE_2=$(( RANDOM % MAX_PAGE + 1 ))
           
-          if [ "$RANDOM_PAGE_1" -lt "$RANDOM_PAGE_2" ]; then
-            FINAL_PAGE="$RANDOM_PAGE_1"
-          else
-            FINAL_PAGE="$RANDOM_PAGE_2"
-          fi
+            if [ "$RANDOM_PAGE_1" -lt "$RANDOM_PAGE_2" ]; then
+              FINAL_PAGE="$RANDOM_PAGE_1"
+            else
+              FINAL_PAGE="$RANDOM_PAGE_2"
+            fi
           
-          echo "最终选择的随机页码: $FINAL_PAGE"
-          curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=1M&purity=100&page=${FINAL_PAGE}" -o api_response.json
-          echo "已获取第 ${FINAL_PAGE} 页的壁纸数据。"
+            echo "正在获取第 ${i} 次随机页: 第 ${FINAL_PAGE} 页"
+            curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=1y&purity=100&page=${FINAL_PAGE}" -o "api_response_${i}.json"
+            sleep 1 # 增加请求间隔，避免过于频繁
+          done
 
-      # [!] 此步骤已更新，以支持文件重命名
-      - name: Process, Rename and Download Wallpapers
+          echo "合并所有获取到的数据..."
+          # 使用 jq 合并所有 api_response_*.json 文件中的 .data 数组
+          jq -s '[.[] | .data] | add | {data: .}' api_response_*.json > api_response.json
+          rm api_response_*.json
+          echo "数据合并完成。"
+
+      - name: Process, Sort and Download Wallpapers
         if: steps.get_data.outputs.SKIP != 'true'
         run: |
           DATA_LENGTH=$(jq '.data | length' api_response.json)
@@ -60,39 +69,54 @@ jobs:
           fi
 
           echo "清理旧画廊..."
-          rm -rf assets/gallery
-          mkdir -p assets/gallery
+          rm -rf assets/landscape assets/portrait
+          mkdir -p assets/landscape assets/portrait
 
           echo "智能选择一张横屏图片作为主背景..."
+          # 从宽高比大于1.2的图片中选择第一张作为背景
           MAIN_BG_URL=$(jq -r '.data[] | select((.ratio | tonumber) > 1.2) | .path' api_response.json | head -n 1)
           if [ -z "$MAIN_BG_URL" ]; then
-            echo "未找到理想的横屏壁纸，使用第一张作为主背景。"
+            echo "未找到理想的横屏壁纸，使用第一张图片作为主背景。"
             MAIN_BG_URL=$(jq -r '.data[0].path' api_response.json)
           fi
-          curl -o assets/background.jpg "$MAIN_BG_URL"
+          curl -s -o assets/background.jpg "$MAIN_BG_URL"
 
-          echo "开始下载所有图片到画廊并重命名..."
+          echo "开始下载并分类所有图片..."
           
-          # 初始化一个计数器和一个空的 JSON 数组字符串
-          COUNT=1
-          JSON_INDEX="[]"
+          # 初始化计数器和 JSON 数组
+          LANDSCAPE_COUNT=1
+          PORTRAIT_COUNT=1
+          LANDSCAPE_JSON="[]"
+          PORTRAIT_JSON="[]"
 
+          # 使用 jq 逐行读取数据进行处理
           while read -r image_json; do
             PATH_URL=$(echo "$image_json" | jq -r '.path')
+            RATIO=$(echo "$image_json" | jq -r '.ratio | tonumber')
             EXTENSION="${PATH_URL##*.}"
-            NEW_FILENAME=$(printf "wallpaper_%02d.%s" "$COUNT" "$EXTENSION")
-          
-            echo "正在下载并重命名为 ${NEW_FILENAME} ..."
-            curl -s -o "assets/gallery/${NEW_FILENAME}" "$PATH_URL"
-          
-            JSON_INDEX=$(echo "$JSON_INDEX" | jq --arg file "$NEW_FILENAME" '. + [$file]')
-          
-            COUNT=$((COUNT + 1))
+
+            # 判断宽高比，1.0 及以上为横屏，以下为竖屏
+            if (( $(echo "$RATIO >= 1.0" | bc -l) )); then
+              FOLDER="landscape"
+              NEW_FILENAME=$(printf "wallpaper_%03d.%s" "$LANDSCAPE_COUNT" "$EXTENSION")
+              echo "正在下载横屏图片: ${NEW_FILENAME} ..."
+              curl -s -o "assets/${FOLDER}/${NEW_FILENAME}" "$PATH_URL"
+              LANDSCAPE_JSON=$(echo "$LANDSCAPE_JSON" | jq --arg file "$NEW_FILENAME" '. + [$file]')
+              LANDSCAPE_COUNT=$((LANDSCAPE_COUNT + 1))
+            else
+              FOLDER="portrait"
+              NEW_FILENAME=$(printf "wallpaper_%03d.%s" "$PORTRAIT_COUNT" "$EXTENSION")
+              echo "正在下载竖屏图片: ${NEW_FILENAME} ..."
+              curl -s -o "assets/${FOLDER}/${NEW_FILENAME}" "$PATH_URL"
+              PORTRAIT_JSON=$(echo "$PORTRAIT_JSON" | jq --arg file "$NEW_FILENAME" '. + [$file]')
+              PORTRAIT_COUNT=$((PORTRAIT_COUNT + 1))
+            fi
           done < <(jq -c '.data[]' api_response.json)
           
-          echo "创建包含新文件名的画廊索引文件..."
-          # 循环结束后，将最终的 JSON 字符串写入文件
-          echo "$JSON_INDEX" > assets/gallery/index.json
+          echo "为不同分类创建索引文件..."
+          echo "$LANDSCAPE_JSON" > assets/landscape/index.json
+          echo "$PORTRAIT_JSON" > assets/portrait/index.json
+          echo "所有图片处理完成。"
 
       - name: Commit and Push new gallery
         if: steps.get_data.outputs.SKIP != 'true'
@@ -101,7 +125,7 @@ jobs:
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add assets/
           if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "feat(bot): Update wallpaper gallery with renamed files"
+            git commit -m "feat(bot): Update and sort wallpapers by aspect ratio"
             git push
             echo "壁纸画廊已更新并推送至仓库。"
           else
