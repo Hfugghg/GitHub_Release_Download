@@ -71,18 +71,22 @@
     });
 
     // --- 壁纸功能 ---
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
     function changeWallpaper(isInitial = false) {
         if (wallpaperList.length === 0) return;
 
-        let randomIndex;
-        if (wallpaperList.length > 1) {
-            do {
-                randomIndex = Math.floor(Math.random() * wallpaperList.length);
-            } while (randomIndex === currentWallpaperIndex);
-        } else {
-            randomIndex = 0;
+        currentWallpaperIndex++;
+        if (currentWallpaperIndex >= wallpaperList.length) {
+            currentWallpaperIndex = 0;
+            shuffleArray(wallpaperList);
         }
-        currentWallpaperIndex = randomIndex;
+
         const nextImageSrc = wallpaperList[currentWallpaperIndex];
 
         const img = new Image();
@@ -123,6 +127,9 @@
             .then(data => {
                 if (data && data.length > 0) {
                     wallpaperList = data.map(file => `${wallpaperPath}/${file}`);
+                    shuffleArray(wallpaperList);
+                    currentWallpaperIndex = -1;
+
                     changeWallpaper(true); // 首次加载
                     wallpaperInterval = setInterval(() => changeWallpaper(false), WALLPAPER_CHANGE_INTERVAL);
                 } else {
