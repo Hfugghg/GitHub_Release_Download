@@ -74,7 +74,15 @@
     function changeWallpaper(isInitial = false) {
         if (wallpaperList.length === 0) return;
 
-        currentWallpaperIndex = (currentWallpaperIndex + 1) % wallpaperList.length;
+        let randomIndex;
+        if (wallpaperList.length > 1) {
+            do {
+                randomIndex = Math.floor(Math.random() * wallpaperList.length);
+            } while (randomIndex === currentWallpaperIndex);
+        } else {
+            randomIndex = 0;
+        }
+        currentWallpaperIndex = randomIndex;
         const nextImageSrc = wallpaperList[currentWallpaperIndex];
 
         const img = new Image();
@@ -103,14 +111,18 @@
     function startWallpaperCycle() {
         if (wallpaperInterval) return;
 
-        fetch('assets/gallery/index.json')
+        const isLandscape = window.innerWidth > window.innerHeight;
+        const wallpaperPath = isLandscape ? 'assets/landscape' : 'assets/portrait';
+        const indexPath = `${wallpaperPath}/index.json`;
+
+        fetch(indexPath)
             .then(response => {
-                if (!response.ok) throw new Error('无法加载壁纸列表');
+                if (!response.ok) throw new Error(`无法加载壁纸列表: ${indexPath}`);
                 return response.json();
             })
             .then(data => {
                 if (data && data.length > 0) {
-                    wallpaperList = data.map(file => `assets/gallery/${file}`);
+                    wallpaperList = data.map(file => `${wallpaperPath}/${file}`);
                     changeWallpaper(true); // 首次加载
                     wallpaperInterval = setInterval(() => changeWallpaper(false), WALLPAPER_CHANGE_INTERVAL);
                 } else {
