@@ -31,21 +31,32 @@ jobs:
           touch assets/landscape/meta.json assets/portrait/meta.json
 
           # 读取现有的所有壁纸ID，用于去重
-          # [修正] 使用 // [] 来防止因 meta.json 为空或格式不正确导致的 null 错误
           EXISTING_IDS=$(jq -s '(.[0].data // []) + (.[1].data // []) | .[] .id' assets/landscape/meta.json assets/portrait/meta.json)
           
           # --- 数据获取和过滤 ---
           echo "开始获取和过滤新的壁纸..."
           NEW_IMAGES_JSON="[]"
 
+          # 获取总页数
           LAST_PAGE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=1y&purity=100" | jq '.meta.last_page')
           if [[ -z "$LAST_PAGE" || "$LAST_PAGE" == "null" || "$LAST_PAGE" -lt 1 ]]; then
             echo "错误：无法获取有效的总页数。跳过本次更新。"
             exit 0
           fi
+          # [新增] 按照您的要求，显示总页数
+          echo "壁纸总页数 (toplist/1M): $LAST_PAGE"
           
+          # 循环处理指定页数
           for i in $(seq 1 $PAGES_TO_PROCESS); do
-            RANDOM_PAGE=$(( RANDOM % LAST_PAGE + 1 ))
+            # [修正] 恢复您原来的加权随机逻辑，使小页数更容易被选中
+            RANDOM_PAGE_1=$(( RANDOM % LAST_PAGE + 1 ))
+            RANDOM_PAGE_2=$(( RANDOM % LAST_PAGE + 1 ))
+            if [ "$RANDOM_PAGE_1" -lt "$RANDOM_PAGE_2" ]; then
+              RANDOM_PAGE="$RANDOM_PAGE_1"
+            else
+              RANDOM_PAGE="$RANDOM_PAGE_2"
+            fi
+          
             echo "正在处理第 ${i}/${PAGES_TO_PROCESS} 页 (API Page: ${RANDOM_PAGE})..."
           
             API_RESPONSE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=1y&purity=100&page=${RANDOM_PAGE}")
@@ -91,7 +102,6 @@ jobs:
           
           # --- 处理、排序和下载 ---
           echo "开始处理和下载 $(echo "$NEW_IMAGES_JSON" | jq 'length') 张新壁纸..."
-          # [修正] 使用 // [] 将空的 meta.json 文件视为空数组，避免 null 错误
           LANDSCAPE_META=$(jq '.data // []' assets/landscape/meta.json)
           PORTRAIT_META=$(jq '.data // []' assets/portrait/meta.json)
 
