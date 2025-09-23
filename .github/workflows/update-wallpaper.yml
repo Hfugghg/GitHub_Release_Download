@@ -22,40 +22,37 @@ jobs:
         id: update_gallery
         run: |
           # --- 配置 ---
-          MAX_FILES_PER_FOLDER=100  # 每个文件夹最大文件数
-          PAGES_TO_PROCESS=3        # 每次运行尝试处理的API页数
-          DUPLICATE_THRESHOLD=0.7   # 当一页API数据中重复率超过70%时，跳过该页
+          MAX_FILES_PER_FOLDER=100
+          PAGES_TO_PROCESS=3
+          DUPLICATE_THRESHOLD=0.7
 
           # --- 初始化 ---
           mkdir -p assets/landscape assets/portrait
           touch assets/landscape/meta.json assets/portrait/meta.json
-
-          # 读取现有的所有壁纸ID，用于去重
           EXISTING_IDS=$(jq -s '(.[0].data // []) + (.[1].data // []) | .[] .id' assets/landscape/meta.json assets/portrait/meta.json)
           
           # --- 数据获取和过滤 ---
           echo "开始获取和过滤新的壁纸..."
           NEW_IMAGES_JSON="[]"
 
-          # 获取总页数
-          LAST_PAGE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=1y&purity=100" | jq '.meta.last_page')
+          LAST_PAGE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=1M&purity=100" | jq '.meta.last_page')
           if [[ -z "$LAST_PAGE" || "$LAST_PAGE" == "null" || "$LAST_PAGE" -lt 1 ]]; then
             echo "错误：无法获取有效的总页数。跳过本次更新。"
             exit 0
           fi
-          # [新增] 按照您的要求，显示总页数
           echo "壁纸总页数 (toplist/1M): $LAST_PAGE"
           
-          # 循环处理指定页数
           for i in $(seq 1 $PAGES_TO_PROCESS); do
-            # [修正] 恢复您原来的加权随机逻辑，使小页数更容易被选中
-            RANDOM_PAGE_1=$(( RANDOM % LAST_PAGE + 1 ))
-            RANDOM_PAGE_2=$(( RANDOM % LAST_PAGE + 1 ))
-            if [ "$RANDOM_PAGE_1" -lt "$RANDOM_PAGE_2" ]; then
-              RANDOM_PAGE="$RANDOM_PAGE_1"
-            else
-              RANDOM_PAGE="$RANDOM_PAGE_2"
-            fi
+            # [增强] 使用6个随机数的最小值，来极大地增加选中低页数的概率
+            # 以满足“超过100页的概率低于1%”的目标
+            MIN_PAGE=$LAST_PAGE
+            for _ in $(seq 1 6); do
+              CURRENT_RANDOM_PAGE=$(( RANDOM % LAST_PAGE + 1 ))
+              if [ "$CURRENT_RANDOM_PAGE" -lt "$MIN_PAGE" ]; then
+                MIN_PAGE="$CURRENT_RANDOM_PAGE"
+              fi
+            done
+            RANDOM_PAGE="$MIN_PAGE"
           
             echo "正在处理第 ${i}/${PAGES_TO_PROCESS} 页 (API Page: ${RANDOM_PAGE})..."
           
@@ -100,7 +97,7 @@ jobs:
             exit 0
           fi
           
-          # --- 处理、排序和下载 ---
+          # --- 后续处理、下载、清理、写入文件的逻辑保持不变 ---
           echo "开始处理和下载 $(echo "$NEW_IMAGES_JSON" | jq 'length') 张新壁纸..."
           LANDSCAPE_META=$(jq '.data // []' assets/landscape/meta.json)
           PORTRAIT_META=$(jq '.data // []' assets/portrait/meta.json)
@@ -128,7 +125,6 @@ jobs:
             fi
           done < <(echo "$NEW_IMAGES_JSON" | jq -c '.[]')
 
-          # --- 清理旧文件 (FIFO) ---
           echo "开始清理旧文件以维持数量上限..."
           TOTAL_LANDSCAPE=$(echo "$LANDSCAPE_META" | jq 'length')
           if [ "$TOTAL_LANDSCAPE" -gt "$MAX_FILES_PER_FOLDER" ]; then
@@ -156,7 +152,6 @@ jobs:
             PORTRAIT_META=$(echo "$PORTRAIT_META" | jq ".[${NUM_TO_DELETE}:]")
           fi
 
-          # --- 写入元数据和索引文件 ---
           echo "正在写回最终的元数据和索引文件..."
           echo "$LANDSCAPE_META" | jq '{ "updated_at": "'$(date --iso-8601=seconds)'", "count": length, "data": . }' > assets/landscape/meta.json
           echo "$PORTRAIT_META"  | jq '{ "updated_at": "'$(date --iso-8601=seconds)'", "count": length, "data": . }' > assets/portrait/meta.json
