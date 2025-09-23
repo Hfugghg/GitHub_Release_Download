@@ -27,26 +27,23 @@ jobs:
           DUPLICATE_THRESHOLD=0.7   # 当一页API数据中重复率超过70%时，跳过该页
 
           # --- 初始化 ---
-          # 确保资产目录和元数据文件存在
           mkdir -p assets/landscape assets/portrait
           touch assets/landscape/meta.json assets/portrait/meta.json
 
           # 读取现有的所有壁纸ID，用于去重
-          EXISTING_IDS=$(jq -s '.[0].data + .[1].data | .[] .id' assets/landscape/meta.json assets/portrait/meta.json)
+          # [修正] 使用 // [] 来防止因 meta.json 为空或格式不正确导致的 null 错误
+          EXISTING_IDS=$(jq -s '(.[0].data // []) + (.[1].data // []) | .[] .id' assets/landscape/meta.json assets/portrait/meta.json)
           
           # --- 数据获取和过滤 ---
           echo "开始获取和过滤新的壁纸..."
           NEW_IMAGES_JSON="[]"
-          MAX_ATTEMPTS=10 # API请求的最大尝试次数
 
-          # 获取总页数
           LAST_PAGE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=1y&purity=100" | jq '.meta.last_page')
           if [[ -z "$LAST_PAGE" || "$LAST_PAGE" == "null" || "$LAST_PAGE" -lt 1 ]]; then
             echo "错误：无法获取有效的总页数。跳过本次更新。"
             exit 0
           fi
           
-          # 循环处理指定页数
           for i in $(seq 1 $PAGES_TO_PROCESS); do
             RANDOM_PAGE=$(( RANDOM % LAST_PAGE + 1 ))
             echo "正在处理第 ${i}/${PAGES_TO_PROCESS} 页 (API Page: ${RANDOM_PAGE})..."
@@ -61,10 +58,13 @@ jobs:
             fi
           
             TOTAL_ON_PAGE=$(echo "$PAGE_IMAGES" | wc -l)
+            if [ "$TOTAL_ON_PAGE" -eq 0 ]; then
+                echo "警告：API页面没有图片数据，跳过。"
+                continue
+            fi
             DUPLICATES_ON_PAGE=0
             FRESH_IMAGES_ON_PAGE="[]"
 
-            # 检查当前页的重复率
             while read -r image_json; do
               IMAGE_ID=$(echo "$image_json" | jq -r '.id')
               if echo "$EXISTING_IDS" | grep -q "\"$IMAGE_ID\""; then
@@ -80,7 +80,6 @@ jobs:
               continue
             fi
 
-            # 将本页所有新的、非重复的图片添加到主列表
             NEW_IMAGES_JSON=$(echo "$NEW_IMAGES_JSON" | jq --argjson fresh "$FRESH_IMAGES_ON_PAGE" '. + $fresh')
             echo "从本页成功添加 $(echo "$FRESH_IMAGES_ON_PAGE" | jq 'length') 张新图。"
           done
@@ -92,11 +91,10 @@ jobs:
           
           # --- 处理、排序和下载 ---
           echo "开始处理和下载 $(echo "$NEW_IMAGES_JSON" | jq 'length') 张新壁纸..."
-          # 读取最新的元数据
-          LANDSCAPE_META=$(jq '.data' assets/landscape/meta.json)
-          PORTRAIT_META=$(jq '.data' assets/portrait/meta.json)
+          # [修正] 使用 // [] 将空的 meta.json 文件视为空数组，避免 null 错误
+          LANDSCAPE_META=$(jq '.data // []' assets/landscape/meta.json)
+          PORTRAIT_META=$(jq '.data // []' assets/portrait/meta.json)
 
-          # 下载新图片并更新元数据列表
           while read -r image_json; do
             ID=$(echo "$image_json" | jq -r '.id')
             PATH_URL=$(echo "$image_json" | jq -r '.path')
@@ -122,7 +120,6 @@ jobs:
 
           # --- 清理旧文件 (FIFO) ---
           echo "开始清理旧文件以维持数量上限..."
-          # 清理横屏文件夹
           TOTAL_LANDSCAPE=$(echo "$LANDSCAPE_META" | jq 'length')
           if [ "$TOTAL_LANDSCAPE" -gt "$MAX_FILES_PER_FOLDER" ]; then
             NUM_TO_DELETE=$((TOTAL_LANDSCAPE - MAX_FILES_PER_FOLDER))
@@ -136,7 +133,6 @@ jobs:
             LANDSCAPE_META=$(echo "$LANDSCAPE_META" | jq ".[${NUM_TO_DELETE}:]")
           fi
 
-          # 清理竖屏文件夹
           TOTAL_PORTRAIT=$(echo "$PORTRAIT_META" | jq 'length')
           if [ "$TOTAL_PORTRAIT" -gt "$MAX_FILES_PER_FOLDER" ]; then
             NUM_TO_DELETE=$((TOTAL_PORTRAIT - MAX_FILES_PER_FOLDER))
@@ -155,11 +151,8 @@ jobs:
           echo "$LANDSCAPE_META" | jq '{ "updated_at": "'$(date --iso-8601=seconds)'", "count": length, "data": . }' > assets/landscape/meta.json
           echo "$PORTRAIT_META"  | jq '{ "updated_at": "'$(date --iso-8601=seconds)'", "count": length, "data": . }' > assets/portrait/meta.json
 
-          # (可选) 为了兼容，重新生成只包含文件名的 index.json
-          # 使用 ls 命令列出所有文件，然后用 jq 格式化成 JSON 数组，比复杂的解析更可靠
           ls assets/landscape/ | jq -R . | jq -s . > assets/landscape/index.json
           ls assets/portrait/ | jq -R . | jq -s . > assets/portrait/index.json
-          # 从生成的列表中移除 meta.json 和 index.json 自身
           jq 'del(.[] | select(. == "index.json" or . == "meta.json"))' assets/landscape/index.json > tmp.$$.json && mv tmp.$$.json assets/landscape/index.json
           jq 'del(.[] | select(. == "index.json" or . == "meta.json"))' assets/portrait/index.json > tmp.$$.json && mv tmp.$$.json assets/portrait/index.json
 
