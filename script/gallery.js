@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let landscapeImages = []; // 用于横向轮播
     let loadedImageCount = 0;
     let isLoading = false;
-    const imagesPerLoad = 15;
+    const imagesPerLoad = 8; // 已根据建议降低并发数
 
     // 瀑布流布局状态
     const targetColumnWidth = 220;
@@ -24,8 +24,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let columnHeights = [];
     let numColumns = 0;
 
-    // --- 新增：追踪当前屏幕方向的状态 ---
     let isCurrentlyLandscape = window.innerWidth > window.innerHeight;
+
+    // --- 新增：轮播图懒加载的状态管理器 ---
+    let carouselLoader = {
+        timer: null,
+        currentIndex: 0,
+        images: []
+    };
+    // 定义每张轮播图加载的间隔时间（毫秒），您可以根据轮播速度调整
+    const CAROUSEL_LOAD_INTERVAL = 5000; // 5秒加载一张
 
     // Fisher-Yates 洗牌算法
     function shuffleArray(array) {
@@ -35,34 +43,73 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- 新增：设置和加载背景轮播的函数 ---
+    // --- 核心修改：重写轮播图设置和懒加载逻辑 ---
+
+    /**
+     * 实际执行加载的函数，将 data-src 替换为 src
+     */
+    function loadNextCarouselImage() {
+        if (carouselLoader.images.length === 0) return;
+
+        // 使用模运算(%)来实现无限循环加载
+        const imgElement = carouselLoader.images[carouselLoader.currentIndex % carouselLoader.images.length];
+
+        // 如果图片有 data-src 属性（意味着还没被加载），就加载它
+        if (imgElement.dataset.src) {
+            imgElement.src = imgElement.dataset.src;
+            // 移除 data-src 防止重复加载
+            imgElement.removeAttribute('data-src');
+        }
+
+        carouselLoader.currentIndex++;
+
+        // 设置定时器，在指定间隔后加载下一张图片
+        carouselLoader.timer = setTimeout(loadNextCarouselImage, CAROUSEL_LOAD_INTERVAL);
+    }
+
+    /**
+     * 设置轮播图的初始结构，并启动懒加载
+     */
     function setupCarousel() {
-        // 清空现有的背景图片
+        // 停止并清除旧的定时器，防止窗口大小改变时产生多个定时器
+        if (carouselLoader.timer) {
+            clearTimeout(carouselLoader.timer);
+        }
         backgroundCarousel.innerHTML = '';
 
-        // 判断当前屏幕方向
         isCurrentlyLandscape = window.innerWidth > window.innerHeight;
         const carouselSource = isCurrentlyLandscape ? landscapeImages : portraitImages;
-
-        // 如果对应的图片列表为空，则使用另一个列表作为备用
         const imagesForCarousel = carouselSource.length > 0 ? carouselSource : (isCurrentlyLandscape ? portraitImages : landscapeImages);
 
-        if (imagesForCarousel.length === 0) return; // 如果没有任何图片，则不执行
+        if (imagesForCarousel.length === 0) return;
 
-        // 加载图片到背景轮播
-        imagesForCarousel.forEach(imageInfo => {
-            const bgImg = new Image();
-            bgImg.src = `assets/${imageInfo.type}/${imageInfo.id}.${imageInfo.ext}`;
+        // 为了动画无缝衔接，如果图片少于20张，就复制一份
+        let displayList = [...imagesForCarousel];
+        if (displayList.length > 0 && displayList.length < 20) {
+            displayList = [...displayList, ...displayList];
+        }
+
+        // 1. 创建所有 img 标签，但不设置 src，而是设置 data-src
+        displayList.forEach(imageInfo => {
+            const bgImg = document.createElement('img');
+            // 将真实的图片地址存放在 data-src 中
+            bgImg.dataset.src = `assets/${imageInfo.type}/${imageInfo.id}.${imageInfo.ext}`;
             backgroundCarousel.appendChild(bgImg);
         });
 
-        // 如果图片数量较少，复制一份以确保动画无缝衔接
-        if (imagesForCarousel.length < 15) {
-            imagesForCarousel.forEach(imageInfo => {
-                const bgImg = new Image();
-                bgImg.src = `assets/${imageInfo.type}/${imageInfo.id}.${imageInfo.ext}`;
-                backgroundCarousel.appendChild(bgImg);
-            });
+        // 2. 准备启动懒加载
+        carouselLoader.images = Array.from(backgroundCarousel.children);
+        carouselLoader.currentIndex = 0;
+
+        if (carouselLoader.images.length > 0) {
+            // 3. 立即加载前两张图片，满足您的启动需求
+            // 加载第一张
+            loadNextCarouselImage();
+            // 立即加载第二张 (通过手动调用并清除定时器，然后再重新启动定时器)
+            if (carouselLoader.images.length > 1) {
+                clearTimeout(carouselLoader.timer); // 清除第一次调用产生的定时器
+                loadNextCarouselImage(); // 这会加载第二张，并为第三张设置新的定时器
+            }
         }
     }
 
@@ -178,14 +225,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 return { id, ext, type: 'landscape' };
             });
 
-            // --- 修改：为不同的用途创建和随机化独立的图片列表 ---
-            // 1. 用于背景轮播的图片列表
             portraitImages = [...portraitIndex];
             landscapeImages = [...landscapeIndex];
             shuffleArray(portraitImages);
             shuffleArray(landscapeImages);
 
-            // 2. 用于画廊内容的混合图片列表
             allImages = [...portraitIndex, ...landscapeIndex];
             shuffleArray(allImages);
 
@@ -231,10 +275,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 gridItem.addEventListener('click', () => openModal(img.src, img.dataset.id));
                 galleryGrid.appendChild(gridItem);
                 positionItem(gridItem);
-
-                // --- 修改：移除此处向背景添加图片的代码 ---
-                // const bgImg = img.cloneNode();
-                // backgroundCarousel.appendChild(bgImg);
 
                 onImageProcessed();
             };
@@ -285,7 +325,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const items = Array.from(galleryGrid.children);
             items.forEach(item => positionItem(item));
 
-            // --- 新增：检查屏幕方向是否改变，如果改变则重新加载背景轮播 ---
             const newIsLandscape = window.innerWidth > window.innerHeight;
             if (newIsLandscape !== isCurrentlyLandscape) {
                 console.log("屏幕方向改变，重新加载背景轮播");
@@ -299,8 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function initialize() {
         setupMasonry();
         await fetchAndCombineData();
-        // --- 修改：在初次加载时独立设置背景轮播 ---
-        setupCarousel();
+        setupCarousel(); // 设置轮播并启动懒加载
         loadMoreImages();
     }
 
