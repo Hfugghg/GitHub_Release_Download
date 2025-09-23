@@ -18,114 +18,158 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Get Max Page Number (Meta Call)
-        id: get_meta
+      - name: Update Wallpaper Gallery
+        id: update_gallery
         run: |
-          LAST_PAGE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=1M&purity=100" | jq '.meta.last_page')
-          echo "热门列表总页数: $LAST_PAGE"
-          echo "LAST_PAGE=${LAST_PAGE}" >> $GITHUB_OUTPUT
+          # --- 配置 ---
+          MAX_FILES_PER_FOLDER=100  # 每个文件夹最大文件数
+          PAGES_TO_PROCESS=3        # 每次运行尝试处理的API页数
+          DUPLICATE_THRESHOLD=0.7   # 当一页API数据中重复率超过70%时，跳过该页
 
-      - name: Fetch 5 Random Pages of Wallpapers
-        id: get_data
-        run: |
-          MAX_PAGE=${{ steps.get_meta.outputs.LAST_PAGE }}
+          # --- 初始化 ---
+          # 确保资产目录和元数据文件存在
+          mkdir -p assets/landscape assets/portrait
+          touch assets/landscape/meta.json assets/portrait/meta.json
+
+          # 读取现有的所有壁纸ID，用于去重
+          EXISTING_IDS=$(jq -s '.[0].data + .[1].data | .[] .id' assets/landscape/meta.json assets/portrait/meta.json)
           
-          if [[ -z "$MAX_PAGE" || "$MAX_PAGE" == "null" || "$MAX_PAGE" -lt 1 ]]; then
+          # --- 数据获取和过滤 ---
+          echo "开始获取和过滤新的壁纸..."
+          NEW_IMAGES_JSON="[]"
+          MAX_ATTEMPTS=10 # API请求的最大尝试次数
+
+          # 获取总页数
+          LAST_PAGE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=1M&purity=100" | jq '.meta.last_page')
+          if [[ -z "$LAST_PAGE" || "$LAST_PAGE" == "null" || "$LAST_PAGE" -lt 1 ]]; then
             echo "错误：无法获取有效的总页数。跳过本次更新。"
-            echo "SKIP=true" >> $GITHUB_OUTPUT
             exit 0
           fi
-
-          echo "开始随机获取 5 页壁纸数据..."
-          for i in {1..5}
-          do
-            RANDOM_PAGE_1=$(( RANDOM % MAX_PAGE + 1 ))
-            RANDOM_PAGE_2=$(( RANDOM % MAX_PAGE + 1 ))
           
-            if [ "$RANDOM_PAGE_1" -lt "$RANDOM_PAGE_2" ]; then
-              FINAL_PAGE="$RANDOM_PAGE_1"
-            else
-              FINAL_PAGE="$RANDOM_PAGE_2"
+          # 循环处理指定页数
+          for i in $(seq 1 $PAGES_TO_PROCESS); do
+            RANDOM_PAGE=$(( RANDOM % LAST_PAGE + 1 ))
+            echo "正在处理第 ${i}/${PAGES_TO_PROCESS} 页 (API Page: ${RANDOM_PAGE})..."
+          
+            API_RESPONSE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=1y&purity=100&page=${RANDOM_PAGE}")
+            PAGE_IMAGES=$(echo "$API_RESPONSE" | jq -c '.data[]')
+          
+            if [[ -z "$PAGE_IMAGES" ]]; then
+              echo "警告：API页面响应为空，尝试下一页。"
+              sleep 1
+              continue
             fi
           
-            echo "正在获取第 ${i} 次随机页: 第 ${FINAL_PAGE} 页"
-            curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=1y&purity=100&page=${FINAL_PAGE}" -o "api_response_${i}.json"
-            sleep 1 # 增加请求间隔，避免过于频繁
+            TOTAL_ON_PAGE=$(echo "$PAGE_IMAGES" | wc -l)
+            DUPLICATES_ON_PAGE=0
+            FRESH_IMAGES_ON_PAGE="[]"
+
+            # 检查当前页的重复率
+            while read -r image_json; do
+              IMAGE_ID=$(echo "$image_json" | jq -r '.id')
+              if echo "$EXISTING_IDS" | grep -q "\"$IMAGE_ID\""; then
+                DUPLICATES_ON_PAGE=$((DUPLICATES_ON_PAGE + 1))
+              else
+                FRESH_IMAGES_ON_PAGE=$(echo "$FRESH_IMAGES_ON_PAGE" | jq --argjson img "$image_json" '. + [$img]')
+              fi
+            done <<< "$PAGE_IMAGES"
+
+            DUPLICATE_RATE=$(echo "scale=2; $DUPLICATES_ON_PAGE / $TOTAL_ON_PAGE" | bc)
+            if (( $(echo "$DUPLICATE_RATE > $DUPLICATE_THRESHOLD" | bc -l) )); then
+              echo "警告：重复率 (${DUPLICATE_RATE}) 过高，放弃处理此页。"
+              continue
+            fi
+
+            # 将本页所有新的、非重复的图片添加到主列表
+            NEW_IMAGES_JSON=$(echo "$NEW_IMAGES_JSON" | jq --argjson fresh "$FRESH_IMAGES_ON_PAGE" '. + $fresh')
+            echo "从本页成功添加 $(echo "$FRESH_IMAGES_ON_PAGE" | jq 'length') 张新图。"
           done
 
-          echo "合并所有获取到的数据..."
-          # 使用 jq 合并所有 api_response_*.json 文件中的 .data 数组
-          jq -s '[.[] | .data] | add | {data: .}' api_response_*.json > api_response.json
-          rm api_response_*.json
-          echo "数据合并完成。"
-
-      - name: Process, Sort and Download Wallpapers
-        if: steps.get_data.outputs.SKIP != 'true'
-        run: |
-          DATA_LENGTH=$(jq '.data | length' api_response.json)
-          if [[ -z "$DATA_LENGTH" || "$DATA_LENGTH" -eq 0 ]]; then
-            echo "错误：API 响应中没有找到有效的图片数据。跳过本次更新。"
+          if [[ $(echo "$NEW_IMAGES_JSON" | jq 'length') -eq 0 ]]; then
+            echo "经过筛选，没有发现任何新的壁纸，本次任务结束。"
             exit 0
           fi
-
-          echo "清理旧画廊..."
-          rm -rf assets/landscape assets/portrait
-          mkdir -p assets/landscape assets/portrait
-
-          echo "智能选择一张横屏图片作为主背景..."
-          # 从宽高比大于1.2的图片中选择第一张作为背景
-          MAIN_BG_URL=$(jq -r '.data[] | select((.ratio | tonumber) > 1.2) | .path' api_response.json | head -n 1)
-          if [ -z "$MAIN_BG_URL" ]; then
-            echo "未找到理想的横屏壁纸，使用第一张图片作为主背景。"
-            MAIN_BG_URL=$(jq -r '.data[0].path' api_response.json)
-          fi
-          curl -s -o assets/background.jpg "$MAIN_BG_URL"
-
-          echo "开始下载并分类所有图片..."
           
-          # 初始化计数器和 JSON 数组
-          LANDSCAPE_COUNT=1
-          PORTRAIT_COUNT=1
-          LANDSCAPE_JSON="[]"
-          PORTRAIT_JSON="[]"
+          # --- 处理、排序和下载 ---
+          echo "开始处理和下载 $(echo "$NEW_IMAGES_JSON" | jq 'length') 张新壁纸..."
+          # 读取最新的元数据
+          LANDSCAPE_META=$(jq '.data' assets/landscape/meta.json)
+          PORTRAIT_META=$(jq '.data' assets/portrait/meta.json)
 
-          # 使用 jq 逐行读取数据进行处理
+          # 下载新图片并更新元数据列表
           while read -r image_json; do
+            ID=$(echo "$image_json" | jq -r '.id')
             PATH_URL=$(echo "$image_json" | jq -r '.path')
+            SOURCE_URL=$(echo "$image_json" | jq -r '.source')
             RATIO=$(echo "$image_json" | jq -r '.ratio | tonumber')
             EXTENSION="${PATH_URL##*.}"
+            FILENAME="${ID}.${EXTENSION}"
+            TIMESTAMP=$(date --iso-8601=seconds)
 
-            # 判断宽高比，1.0 及以上为横屏，以下为竖屏
+            NEW_META_ENTRY=$(jq -n --arg id "$ID" --arg source "$SOURCE_URL" --arg ts "$TIMESTAMP" \
+              '{id: $id, source: $source, added_at: $ts}')
+
             if (( $(echo "$RATIO >= 1.0" | bc -l) )); then
-              FOLDER="landscape"
-              NEW_FILENAME=$(printf "wallpaper_%03d.%s" "$LANDSCAPE_COUNT" "$EXTENSION")
-              echo "正在下载横屏图片: ${NEW_FILENAME} ..."
-              curl -s -o "assets/${FOLDER}/${NEW_FILENAME}" "$PATH_URL"
-              LANDSCAPE_JSON=$(echo "$LANDSCAPE_JSON" | jq --arg file "$NEW_FILENAME" '. + [$file]')
-              LANDSCAPE_COUNT=$((LANDSCAPE_COUNT + 1))
+              echo "下载横屏图片: ${FILENAME}"
+              curl -s -L -o "assets/landscape/${FILENAME}" "$PATH_URL"
+              LANDSCAPE_META=$(echo "$LANDSCAPE_META" | jq --argjson entry "$NEW_META_ENTRY" '. + [$entry]')
             else
-              FOLDER="portrait"
-              NEW_FILENAME=$(printf "wallpaper_%03d.%s" "$PORTRAIT_COUNT" "$EXTENSION")
-              echo "正在下载竖屏图片: ${NEW_FILENAME} ..."
-              curl -s -o "assets/${FOLDER}/${NEW_FILENAME}" "$PATH_URL"
-              PORTRAIT_JSON=$(echo "$PORTRAIT_JSON" | jq --arg file "$NEW_FILENAME" '. + [$file]')
-              PORTRAIT_COUNT=$((PORTRAIT_COUNT + 1))
+              echo "下载竖屏图片: ${FILENAME}"
+              curl -s -L -o "assets/portrait/${FILENAME}" "$PATH_URL"
+              PORTRAIT_META=$(echo "$PORTRAIT_META" | jq --argjson entry "$NEW_META_ENTRY" '. + [$entry]')
             fi
-          done < <(jq -c '.data[]' api_response.json)
-          
-          echo "为不同分类创建索引文件..."
-          echo "$LANDSCAPE_JSON" > assets/landscape/index.json
-          echo "$PORTRAIT_JSON" > assets/portrait/index.json
-          echo "所有图片处理完成。"
+          done < <(echo "$NEW_IMAGES_JSON" | jq -c '.[]')
+
+          # --- 清理旧文件 (FIFO) ---
+          echo "开始清理旧文件以维持数量上限..."
+          # 清理横屏文件夹
+          TOTAL_LANDSCAPE=$(echo "$LANDSCAPE_META" | jq 'length')
+          if [ "$TOTAL_LANDSCAPE" -gt "$MAX_FILES_PER_FOLDER" ]; then
+            NUM_TO_DELETE=$((TOTAL_LANDSCAPE - MAX_FILES_PER_FOLDER))
+            echo "横屏文件夹需要删除 ${NUM_TO_DELETE} 个最老的文件。"
+            TO_DELETE=$(echo "$LANDSCAPE_META" | jq -c ".[0:${NUM_TO_DELETE}] | .[]")
+            while read -r meta_entry; do
+              ID_TO_DELETE=$(echo "$meta_entry" | jq -r '.id')
+              find assets/landscape -name "${ID_TO_DELETE}.*" -exec rm {} \;
+              echo "已删除旧文件: ${ID_TO_DELETE}.*"
+            done <<< "$TO_DELETE"
+            LANDSCAPE_META=$(echo "$LANDSCAPE_META" | jq ".[${NUM_TO_DELETE}:]")
+          fi
+
+          # 清理竖屏文件夹
+          TOTAL_PORTRAIT=$(echo "$PORTRAIT_META" | jq 'length')
+          if [ "$TOTAL_PORTRAIT" -gt "$MAX_FILES_PER_FOLDER" ]; then
+            NUM_TO_DELETE=$((TOTAL_PORTRAIT - MAX_FILES_PER_FOLDER))
+            echo "竖屏文件夹需要删除 ${NUM_TO_DELETE} 个最老的文件。"
+            TO_DELETE=$(echo "$PORTRAIT_META" | jq -c ".[0:${NUM_TO_DELETE}] | .[]")
+            while read -r meta_entry; do
+              ID_TO_DELETE=$(echo "$meta_entry" | jq -r '.id')
+              find assets/portrait -name "${ID_TO_DELETE}.*" -exec rm {} \;
+              echo "已删除旧文件: ${ID_TO_DELETE}.*"
+            done <<< "$TO_DELETE"
+            PORTRAIT_META=$(echo "$PORTRAIT_META" | jq ".[${NUM_TO_DELETE}:]")
+          fi
+
+          # --- 写入元数据和索引文件 ---
+          echo "正在写回最终的元数据和索引文件..."
+          echo "$LANDSCAPE_META" | jq '{ "updated_at": "'$(date --iso-8601=seconds)'", "count": length, "data": . }' > assets/landscape/meta.json
+          echo "$PORTRAIT_META"  | jq '{ "updated_at": "'$(date --iso-8601=seconds)'", "count": length, "data": . }' > assets/portrait/meta.json
+
+          # (可选) 为了兼容，重新生成只包含文件名的 index.json
+          # 使用 ls 命令列出所有文件，然后用 jq 格式化成 JSON 数组，比复杂的解析更可靠
+          ls assets/landscape/ | jq -R . | jq -s . > assets/landscape/index.json
+          ls assets/portrait/ | jq -R . | jq -s . > assets/portrait/index.json
+          # 从生成的列表中移除 meta.json 和 index.json 自身
+          jq 'del(.[] | select(. == "index.json" or . == "meta.json"))' assets/landscape/index.json > tmp.$$.json && mv tmp.$$.json assets/landscape/index.json
+          jq 'del(.[] | select(. == "index.json" or . == "meta.json"))' assets/portrait/index.json > tmp.$$.json && mv tmp.$$.json assets/portrait/index.json
 
       - name: Commit and Push new gallery
-        if: steps.get_data.outputs.SKIP != 'true'
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add assets/
           if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "feat(bot): Update and sort wallpapers by aspect ratio"
+            git commit -m "feat(bot): Update wallpaper gallery, add new and remove old"
             git push
             echo "壁纸画廊已更新并推送至仓库。"
           else
