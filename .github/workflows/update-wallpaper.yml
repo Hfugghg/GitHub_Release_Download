@@ -41,32 +41,49 @@ jobs:
           fi
           echo "壁纸总页数 (toplist/6M): $LAST_PAGE"
           
-          for i in $(seq 1 $PAGES_TO_PROCESS); do
-            echo "正在根据权重选择随机页面..."
-            PROB_ROLL=$(( RANDOM % 1000 + 1 ))
+          # [修正1 新增] 初始化一个字符串来存储本次运行已处理的页面
+          PROCESSED_PAGES=" " 
 
-            if [ "$PROB_ROLL" -le 800 ]; then
-              RANDOM_PAGE=$(( RANDOM % 10 + 1 ))
-              echo "权重命中范围 [1-10]，选中页面: ${RANDOM_PAGE}"
-            elif [ "$PROB_ROLL" -le 990 ]; then
-              UPPER_BOUND=$( [ "100" -lt "$LAST_PAGE" ] && echo "100" || echo "$LAST_PAGE" )
-              if [ "$UPPER_BOUND" -gt 10 ]; then
-                RANGE=$(( UPPER_BOUND - 10 ))
-                RANDOM_PAGE=$(( RANDOM % RANGE + 11 ))
-              else
+          for i in $(seq 1 $PAGES_TO_PROCESS); do
+            # [修正1 修改] 使用循环来确保选中的页面是唯一的
+            while true; do
+              echo "正在根据权重选择随机页面..."
+              PROB_ROLL=$(( RANDOM % 1000 + 1 ))
+
+              if [ "$PROB_ROLL" -le 800 ]; then
                 RANDOM_PAGE=$(( RANDOM % 10 + 1 ))
-              fi
-              echo "权重命中范围 [11-100]，选中页面: ${RANDOM_PAGE}"
-            else
-              if [ "$LAST_PAGE" -gt 100 ]; then
-                RANGE=$(( LAST_PAGE - 100 ))
-                RANDOM_PAGE=$(( RANDOM % RANGE + 101 ))
-                echo "权重命中范围 [101-${LAST_PAGE}]，选中页面: ${RANDOM_PAGE}"
+                echo "权重命中范围 [1-10]，初步选中页面: ${RANDOM_PAGE}"
+              elif [ "$PROB_ROLL" -le 990 ]; then
+                UPPER_BOUND=$( [ "100" -lt "$LAST_PAGE" ] && echo "100" || echo "$LAST_PAGE" )
+                if [ "$UPPER_BOUND" -gt 10 ]; then
+                  RANGE=$(( UPPER_BOUND - 10 ))
+                  RANDOM_PAGE=$(( RANDOM % RANGE + 11 ))
+                else
+                  RANDOM_PAGE=$(( RANDOM % 10 + 1 ))
+                fi
+                echo "权重命中范围 [11-100]，初步选中页面: ${RANDOM_PAGE}"
               else
-                RANDOM_PAGE=$(( RANDOM % LAST_PAGE + 1 ))
-                echo "权重命中范围 [101+] (总页数不足，回退至 1-${LAST_PAGE})，选中页面: ${RANDOM_PAGE}"
+                if [ "$LAST_PAGE" -gt 100 ]; then
+                  RANGE=$(( LAST_PAGE - 100 ))
+                  RANDOM_PAGE=$(( RANDOM % RANGE + 101 ))
+                  echo "权重命中范围 [101-${LAST_PAGE}]，初步选中页面: ${RANDOM_PAGE}"
+                else
+                  RANDOM_PAGE=$(( RANDOM % LAST_PAGE + 1 ))
+                  echo "权重命中范围 [101+] (回退)，初步选中页面: ${RANDOM_PAGE}"
+                fi
               fi
-            fi
+              
+              # 检查选中的页面是否已经处理过
+              if [[ $PROCESSED_PAGES == *" $RANDOM_PAGE "* ]]; then
+                echo "页面 ${RANDOM_PAGE} 在本次运行中已被处理过，正在重新选择..."
+              else
+                break # 如果是新页面，则跳出循环
+              fi
+            done
+            
+            # 将确认唯一的页面添加到已处理列表
+            PROCESSED_PAGES+="$RANDOM_PAGE "
+            echo "最终确认处理页面: ${RANDOM_PAGE}"
 
             echo "正在处理第 ${i}/${PAGES_TO_PROCESS} 次更新 (API Page: ${RANDOM_PAGE})..."
           
@@ -74,24 +91,23 @@ jobs:
             PAGE_IMAGES=$(echo "$API_RESPONSE" | jq -c '.data[]')
           
             if [[ -z "$PAGE_IMAGES" ]]; then continue; fi
-            if [ "$(echo "$PAGE_IMAGES" | wc -l)" -eq 0 ]; then continue; fi
+            
+            # ... (后续脚本保持不变) ...
+            TOTAL_ON_PAGE=$(echo "$PAGE_IMAGES" | wc -l)
+            if [ "$TOTAL_ON_PAGE" -eq 0 ]; then continue; fi
           
             FRESH_IMAGES_ON_PAGE="[]"
             while read -r image_json; do
               IMAGE_ID=$(echo "$image_json" | jq -r '.id')
-              if echo -e "$EXISTING_IDS" | grep -q "\"$IMAGE_ID\""; then
+              if echo "$EXISTING_IDS" | grep -q "\"$IMAGE_ID\""; then
                 continue
               else
                 FRESH_IMAGES_ON_PAGE=$(echo "$FRESH_IMAGES_ON_PAGE" | jq --argjson img "$image_json" '. + [$img]')
               fi
             done <<< "$PAGE_IMAGES"
 
-            # [修复 1] 在此立即更新 EXISTING_IDS 变量，防止单次运行内重复添加
             FRESH_IDS=$(echo "$FRESH_IMAGES_ON_PAGE" | jq -r '.[] .id')
-            if [ -n "$FRESH_IDS" ]; then
-                EXISTING_IDS="${EXISTING_IDS}\n${FRESH_IDS}"
-            fi
-
+            EXISTING_IDS="${EXISTING_IDS}\n${FRESH_IDS}"
             NEW_IMAGES_JSON=$(echo "$NEW_IMAGES_JSON" | jq --argjson fresh "$FRESH_IMAGES_ON_PAGE" '. + $fresh')
             echo "从本页成功添加 $(echo "$FRESH_IMAGES_ON_PAGE" | jq 'length') 张新图。"
           done
@@ -101,8 +117,6 @@ jobs:
             exit 0
           fi
           
-          # --- 省略下载和文件清理部分（保持不变） ---
-          # --- Handling, sorting, and downloading ---
           echo "开始处理和下载 $(echo "$NEW_IMAGES_JSON" | jq 'length') 张新壁纸..."
           OLD_LANDSCAPE_META=$(jq '.data // []' assets/landscape/meta.json)
           OLD_PORTRAIT_META=$(jq '.data // []' assets/portrait/meta.json)
@@ -128,9 +142,9 @@ jobs:
               NEW_PORTRAIT_ENTRIES=$(echo "$NEW_PORTRAIT_ENTRIES" | jq --argjson entry "$NEW_META_ENTRY" '. + [$entry]')
             fi
           done < <(echo "$NEW_IMAGES_JSON" | jq -c '.[]')
+
           LANDSCAPE_META=$(jq -s '.[0] + .[1]' <(echo "$OLD_LANDSCAPE_META") <(echo "$NEW_LANDSCAPE_ENTRIES"))
           PORTRAIT_META=$(jq -s '.[0] + .[1]' <(echo "$OLD_PORTRAIT_META") <(echo "$NEW_PORTRAIT_ENTRIES"))
-          # --- Cleaning up old files (FIFO) ---
           echo "开始清理旧文件以维持数量上限..."
           TOTAL_LANDSCAPE=$(echo "$LANDSCAPE_META" | jq 'length')
           if [ "$TOTAL_LANDSCAPE" -gt "$MAX_FILES_PER_FOLDER" ]; then
@@ -156,7 +170,7 @@ jobs:
             done <<< "$TO_DELETE"
             PORTRAIT_META=$(echo "$PORTRAIT_META" | jq ".[${NUM_TO_DELETE}:]")
           fi
-          # --- Writing metadata and index files ---
+
           echo "正在写回最终的元数据和索引文件..."
           echo "$LANDSCAPE_META" | jq '{ "updated_at": "'$(date --iso-8601=seconds)'", "count": length, "data": . }' > assets/landscape/meta.json
           echo "$PORTRAIT_META"  | jq '{ "updated_at": "'$(date --iso-8601=seconds)'", "count": length, "data": . }' > assets/portrait/meta.json
@@ -172,7 +186,7 @@ jobs:
           git add assets/
           if [ -n "$(git status --porcelain)" ]; then
             git commit -m "feat(bot): Update wallpaper gallery, add new and remove old"
-            # [修复 2] 在 push 前先执行 git pull --rebase，同步远程仓库的最新变更
+            # [修正2] 在 push 之前先 pull --rebase，同步远程的更新
             git pull --rebase
             git push
             echo "壁纸画廊已更新并推送至仓库。"
