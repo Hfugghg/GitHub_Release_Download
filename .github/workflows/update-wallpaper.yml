@@ -24,6 +24,7 @@ jobs:
           # --- 配置 ---
           MAX_FILES_PER_FOLDER=100
           PAGES_TO_PROCESS=3
+          # DUPLICATE_THRESHOLD 变量已不再需要，但保留以供参考
           DUPLICATE_THRESHOLD=0.7
 
           # --- 初始化 ---
@@ -51,36 +52,40 @@ jobs:
               fi
             done
             RANDOM_PAGE="$MIN_PAGE"
-            
+          
             echo "正在处理第 ${i}/${PAGES_TO_PROCESS} 页 (API Page: ${RANDOM_PAGE})..."
-            
-            API_RESPONSE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=1y&purity=100&page=${RANDOM_PAGE}")
+          
+            # [变更 2] 将热门列表时间范围从 1y 改为 6M
+            API_RESPONSE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=6M&purity=100&page=${RANDOM_PAGE}")
             PAGE_IMAGES=$(echo "$API_RESPONSE" | jq -c '.data[]')
-            
+          
             if [[ -z "$PAGE_IMAGES" ]]; then continue; fi
-            
+          
             TOTAL_ON_PAGE=$(echo "$PAGE_IMAGES" | wc -l)
             if [ "$TOTAL_ON_PAGE" -eq 0 ]; then continue; fi
-            
-            DUPLICATES_ON_PAGE=0
+          
             FRESH_IMAGES_ON_PAGE="[]"
 
             while read -r image_json; do
               IMAGE_ID=$(echo "$image_json" | jq -r '.id')
               if echo "$EXISTING_IDS" | grep -q "\"$IMAGE_ID\""; then
-                DUPLICATES_ON_PAGE=$((DUPLICATES_ON_PAGE + 1))
+                # 如果图片已存在，则跳过此图片
+                continue
               else
+                # 如果是新图片，则添加到本页的新图片列表中
                 FRESH_IMAGES_ON_PAGE=$(echo "$FRESH_IMAGES_ON_PAGE" | jq --argjson img "$image_json" '. + [$img]')
               fi
             done <<< "$PAGE_IMAGES"
 
-            DUPLICATE_RATE=$(echo "scale=2; $DUPLICATES_ON_PAGE / $TOTAL_ON_PAGE" | bc)
-            if (( $(echo "$DUPLICATE_RATE > $DUPLICATE_THRESHOLD" | bc -l) )); then
-              echo "警告：重复率 (${DUPLICATE_RATE}) 过高，放弃处理此页。"
-              continue
-            fi
+            # [变更 1] 移除重复率检查逻辑。
+            # 现在无论重复图片有多少，只要有新图片就会被处理。
+            # DUPLICATE_RATE=$(echo "scale=2; $DUPLICATES_ON_PAGE / $TOTAL_ON_PAGE" | bc)
+            # if (( $(echo "$DUPLICATE_RATE > $DUPLICATE_THRESHOLD" | bc -l) )); then
+            #   echo "警告：重复率 (${DUPLICATE_RATE}) 过高，放弃处理此页。"
+            #   continue
+            # fi
 
-            # [修正1] 将本次找到的新图片ID，立刻加入到EXISTING_IDS中，防止同一次运行中重复添加
+            # 将本次找到的新图片ID，立刻加入到EXISTING_IDS中，防止同一次运行中重复添加
             FRESH_IDS=$(echo "$FRESH_IMAGES_ON_PAGE" | jq -r '.[] .id')
             EXISTING_IDS="${EXISTING_IDS}\n${FRESH_IDS}"
 
@@ -95,7 +100,7 @@ jobs:
           
           # --- 处理、排序和下载 ---
           echo "开始处理和下载 $(echo "$NEW_IMAGES_JSON" | jq 'length') 张新壁纸..."
-          # [修正2] 采用更稳健的方式处理元数据
+          # 采用更稳健的方式处理元数据
           # 先读取旧的元数据
           OLD_LANDSCAPE_META=$(jq '.data // []' assets/landscape/meta.json)
           OLD_PORTRAIT_META=$(jq '.data // []' assets/portrait/meta.json)
@@ -132,10 +137,8 @@ jobs:
 
           # --- 清理旧文件 (FIFO) ---
           echo "开始清理旧文件以维持数量上限..."
-          # 现在 TOTAL_* 变量的计算是安全的
           TOTAL_LANDSCAPE=$(echo "$LANDSCAPE_META" | jq 'length')
           if [ "$TOTAL_LANDSCAPE" -gt "$MAX_FILES_PER_FOLDER" ]; then
-            # ... 清理逻辑保持不变 ...
             NUM_TO_DELETE=$((TOTAL_LANDSCAPE - MAX_FILES_PER_FOLDER))
             echo "横屏文件夹需要删除 ${NUM_TO_DELETE} 个最老的文件。"
             TO_DELETE=$(echo "$LANDSCAPE_META" | jq -c ".[0:${NUM_TO_DELETE}] | .[]")
@@ -149,7 +152,6 @@ jobs:
 
           TOTAL_PORTRAIT=$(echo "$PORTRAIT_META" | jq 'length')
           if [ "$TOTAL_PORTRAIT" -gt "$MAX_FILES_PER_FOLDER" ]; then
-            # ... 清理逻辑保持不变 ...
             NUM_TO_DELETE=$((TOTAL_PORTRAIT - MAX_FILES_PER_FOLDER))
             echo "竖屏文件夹需要删除 ${NUM_TO_DELETE} 个最老的文件。"
             TO_DELETE=$(echo "$PORTRAIT_META" | jq -c ".[0:${NUM_TO_DELETE}] | .[]")
@@ -162,7 +164,6 @@ jobs:
           fi
 
           # --- 写入元数据和索引文件 ---
-          # ... 写入逻辑保持不变 ...
           echo "正在写回最终的元数据和索引文件..."
           echo "$LANDSCAPE_META" | jq '{ "updated_at": "'$(date --iso-8601=seconds)'", "count": length, "data": . }' > assets/landscape/meta.json
           echo "$PORTRAIT_META"  | jq '{ "updated_at": "'$(date --iso-8601=seconds)'", "count": length, "data": . }' > assets/portrait/meta.json
@@ -173,7 +174,6 @@ jobs:
           jq 'del(.[] | select(. == "index.json" or . == "meta.json"))' assets/portrait/index.json > tmp.$$.json && mv tmp.$$.json assets/portrait/index.json
 
       - name: Commit and Push new gallery
-        # ... 提交逻辑保持不变 ...
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
