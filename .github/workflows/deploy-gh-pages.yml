@@ -20,39 +20,21 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      # 步骤 1: 检出 gh-pages 分支到临时目录，目的是为了获取 assets 文件夹
-      - name: Checkout gh-pages branch into a temp directory
-        uses: actions/checkout@v4
-        with:
-          ref: gh-pages
-          path: ./gh-pages-temp # 检出到子目录 gh-pages-temp
-
-      # 步骤 2: 检出 main 分支的最新代码（这会覆盖当前工作目录）
+      # 步骤 1: 检出 main 分支作为源内容
       - name: Checkout main branch
         uses: actions/checkout@v4
         with:
           ref: main
 
-      # 步骤 3: 同步 main 分支的内容到临时目录
-      # 使用 rsync 命令，它会用 main 分支的文件更新 gh-pages-temp 目录
-      # -r: 递归, -u: 只在源文件较新时才更新, -a: 归档模式
-      # --delete: 会删除临时目录中有，但 main 分支没有的文件（但我们排除了 assets）
-      # --exclude: 排除不需要同步的文件夹
-      - name: Sync main branch content to temp directory
-        run: |
-          rsync -avru --delete \
-          --exclude '.git' \
-          --exclude '.github' \
-          --exclude 'gh-pages-temp' \
-          ./ ./gh-pages-temp/
-
-      # 步骤 4: 部署合并后的临时目录到 gh-pages 分支
-      - name: Deploy to gh-pages branch 🚀
+      # 步骤 2: 部署到 gh-pages 分支
+      - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # 关键: 指定我们准备好的、包含所有正确文件的目录
-          publish_dir: ./gh-pages-temp
           publish_branch: gh-pages
-          # 因为我们已经手动准备好了所有文件，所以不再需要 force_orphan 或 keep_files
+          # 关键：告诉 action 我们要保留目标分支的文件
+          keep_files: true
+          # 我们不再使用复杂的 rsync 和手动 checkout
+          # 直接使用 action 的 `keep_files` 选项，这才是它的正确用法
+          # 它会把 main 分支的内容叠加到 gh-pages 分支上，并保留 gh-pages 上独有的文件
           commit_message: "Deploy: Update site from main branch"
