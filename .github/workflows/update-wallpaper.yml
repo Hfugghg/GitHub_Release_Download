@@ -15,12 +15,10 @@ jobs:
   update-gallery:
     runs-on: ubuntu-latest
     steps:
-      # 变更 1: 直接检出 gh-pages 分支
-      # 所有的操作都将在这个分支上进行
       - name: 检出 gh-pages 分支
         uses: actions/checkout@v4
         with:
-          ref: gh-pages # 明确指定工作分支为 gh-pages
+          ref: gh-pages
 
       - name: 更新壁纸库
         id: update_gallery
@@ -28,14 +26,11 @@ jobs:
           # --- 配置 ---
           MAX_FILES_PER_FOLDER=100
           PAGES_TO_PROCESS=3
-          TOP_RANGE="6M" # 定义 Toplist 范围 (例如 1M, 6M, 1y)
+          TOP_RANGE="6M"
 
           # --- 初始化 ---
-          # 确保目标目录存在
           mkdir -p assets/landscape assets/portrait
-          # 如果元数据文件不存在，则创建空的
           touch assets/landscape/meta.json assets/portrait/meta.json
-          # 读取已存在的图片ID，防止重复下载
           EXISTING_IDS=$(jq -s '(.[0].data // []) + (.[1].data // []) | .[] .id' assets/landscape/meta.json assets/portrait/meta.json)
           
           # --- 数据获取和过滤 ---
@@ -49,14 +44,39 @@ jobs:
           fi
           echo "壁纸总页数 (toplist/${TOP_RANGE}): $LAST_PAGE"
           
-          for i in $(seq 1 $PAGES_TO_PROCESS); do
-            RANDOM_PAGE=$(( RANDOM % LAST_PAGE + 1 ))
-            echo "正在处理第 ${i}/${PAGES_TO_PROCESS} 页 (API Page: ${RANDOM_PAGE})..."
+          # --- 【新逻辑】选择要处理的页面 ---
+          # 规则：固定第1页，其余随机且偏向低页数，不重复。
+          PAGES_TO_FETCH="1"
+          echo "已将第 1 页加入处理队列。"
           
-            API_RESPONSE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=${TOP_RANGE}&purity=100&page=${RANDOM_PAGE}")
+          # 循环直到我们有足够数量的页面
+          while [ $(echo "$PAGES_TO_FETCH" | wc -w) -lt $PAGES_TO_PROCESS ]; do
+            # 生成两个随机数并取较小者，以偏向低页数
+            R1=$((RANDOM % LAST_PAGE + 1))
+            R2=$((RANDOM % LAST_PAGE + 1))
+            CANDIDATE_PAGE=$(( R1 < R2 ? R1 : R2 ))
+          
+            # 检查页面是否已经存在于队列中，避免重复
+            if ! echo " $PAGES_TO_FETCH " | grep -q " ${CANDIDATE_PAGE} "; then
+              PAGES_TO_FETCH="$PAGES_TO_FETCH ${CANDIDATE_PAGE}"
+              echo "已将随机页 ${CANDIDATE_PAGE} 加入处理队列。"
+            fi
+          done
+          
+          echo "最终处理页面队列: [${PAGES_TO_FETCH}]"
+          
+          # --- 遍历选定的页面进行处理 ---
+          COUNTER=1
+          for API_PAGE in $PAGES_TO_FETCH; do
+            echo "正在处理第 ${COUNTER}/${PAGES_TO_PROCESS} 页 (API Page: ${API_PAGE})..."
+          
+            API_RESPONSE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=${TOP_RANGE}&purity=100&page=${API_PAGE}")
             PAGE_IMAGES=$(echo "$API_RESPONSE" | jq -c '.data[]')
           
-            if [[ -z "$PAGE_IMAGES" || $(echo "$PAGE_IMAGES" | wc -l) -eq 0 ]]; then continue; fi
+            if [[ -z "$PAGE_IMAGES" || $(echo "$PAGE_IMAGES" | wc -l) -eq 0 ]]; then 
+              COUNTER=$((COUNTER + 1))
+              continue
+            fi
           
             FRESH_IMAGES_ON_PAGE="[]"
             while read -r image_json; do
@@ -72,6 +92,7 @@ jobs:
             EXISTING_IDS="${EXISTING_IDS}\n${FRESH_IDS}"
             NEW_IMAGES_JSON=$(echo "$NEW_IMAGES_JSON" | jq --argjson fresh "$FRESH_IMAGES_ON_PAGE" '. + $fresh')
             echo "从本页成功添加 $(echo "$FRESH_IMAGES_ON_PAGE" | jq 'length') 张新图。"
+            COUNTER=$((COUNTER + 1))
           done
 
           if [[ $(echo "$NEW_IMAGES_JSON" | jq 'length') -eq 0 ]]; then
@@ -140,7 +161,6 @@ jobs:
             PORTRAIT_META=$(echo "$PORTRAIT_META" | jq ".[${NUM_TO_DELETE}:]")
           fi
 
-
           # --- 写入元数据和索引文件 ---
           echo "正在写回最终的元数据和索引文件..."
           echo "$LANDSCAPE_META" | jq '{ "updated_at": "'$(date --iso-8601=seconds)'", "count": length, "data": . }' > assets/landscape/meta.json
@@ -151,21 +171,17 @@ jobs:
           jq 'del(.[] | select(. == "index.json" or . == "meta.json"))' assets/landscape/index.json > tmp.$$.json && mv tmp.$$.json assets/landscape/index.json
           jq 'del(.[] | select(. == "index.json" or . == "meta.json"))' assets/portrait/index.json > tmp.$$.json && mv tmp.$$.json assets/portrait/index.json
 
-      # 变更 2: 提交并推送到 gh-pages 分支
       - name: 提交并推送到 gh-pages 分支
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           
           git add assets/
-          # 检查是否有文件更改
           if [ -z "$(git status --porcelain)" ]; then
             echo "壁纸没有变化，无需推送。"
           else
-            # 使用常规提交，而不是 --amend
             git commit -m "feat(bot): 更新壁纸库资源"
             echo "提交成功，准备推送至 'gh-pages' 分支..."
-            # 推送到远程的 gh-pages 分支
             git push origin gh-pages
             echo "壁纸画廊已更新并推送至 'gh-pages' 分支。"
           fi
