@@ -51,11 +51,30 @@ jobs:
           
           # 循环直到我们有足够数量的页面
           while [ $(echo "$PAGES_TO_FETCH" | wc -w) -lt $PAGES_TO_PROCESS ]; do
-            # 生成两个随机数并取较小者，以偏向低页数
-            R1=$((RANDOM % LAST_PAGE + 1))
-            R2=$((RANDOM % LAST_PAGE + 1))
-            CANDIDATE_PAGE=$(( R1 < R2 ? R1 : R2 ))
           
+            # ======================= 从这里开始修改 =======================
+            # 【方案二】用80%的概率强制选择20以下的页面
+            GATEKEEPER=$((RANDOM % 10)) # 生成一个 0-9 的随机数
+
+            # 如果随机数小于8 (0-7，即80%的概率)
+            if [ "$GATEKEEPER" -lt 8 ]; then
+              # 直接在 1-20 页之间随机选择
+              # 注意：为防止总页数小于20，我们取 20 和 LAST_PAGE 中的较小值作为上限
+              MAX_TARGET_PAGE=20
+              if [ "$LAST_PAGE" -lt 20 ]; then
+                MAX_TARGET_PAGE=$LAST_PAGE
+              fi
+              CANDIDATE_PAGE=$((RANDOM % MAX_TARGET_PAGE + 1))
+              echo "触发精准控制：在 1-${MAX_TARGET_PAGE} 页内选择。"
+            else
+              # 否则 (20%的概率)，使用之前的偏向逻辑在全部页面里选
+              echo "触发全局偏向选择..."
+              R1=$((RANDOM % LAST_PAGE + 1))
+              R2=$((RANDOM % LAST_PAGE + 1))
+              CANDIDATE_PAGE=$(( R1 < R2 ? R1 : R2 ))
+            fi
+            # ======================= 到这里结束修改 =======================
+
             # 检查页面是否已经存在于队列中，避免重复
             if ! echo " $PAGES_TO_FETCH " | grep -q " ${CANDIDATE_PAGE} "; then
               PAGES_TO_FETCH="$PAGES_TO_FETCH ${CANDIDATE_PAGE}"
