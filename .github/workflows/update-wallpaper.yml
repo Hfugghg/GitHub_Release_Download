@@ -15,12 +15,13 @@ jobs:
   update-gallery:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      # 变更点 1: 检出专门用于存放壁纸数据的分支 (gallery-data)
+      # 这样可以确保 Action 的所有操作都与你的主分支隔离。
+      - name: Checkout data branch
         uses: actions/checkout@v4
         with:
-          # <--- 变更点 1: 获取完整历史
-          # amend 操作需要基于上一个 commit，因此不能使用默认的浅克隆 (fetch-depth: 1)
-          fetch-depth: 0
+          ref: gallery-data # 明确指定机器人工作的分支
+          fetch-depth: 0    # 依然需要完整历史以支持 --amend
 
       - name: Update Wallpaper Gallery
         id: update_gallery
@@ -176,22 +177,25 @@ jobs:
           jq 'del(.[] | select(. == "index.json" or . == "meta.json"))' assets/landscape/index.json > tmp.$$.json && mv tmp.$$.json assets/landscape/index.json
           jq 'del(.[] | select(. == "index.json" or . == "meta.json"))' assets/portrait/index.json > tmp.$$.json && mv tmp.$$.json assets/portrait/index.json
 
-      # <--- 变更点 2: 修改提交和推送的逻辑
-      - name: Commit and Push new gallery
+      # 变更点 2: 修改提交和推送的逻辑，确保所有操作都在 'gallery-data' 分支上
+      - name: Commit and Push to data branch
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # 为确保万无一失，再次强制切换到 gallery-data 分支。
+          # -B 参数意味着：如果分支已存在，则重置它；如果不存在，则创建它。
+          git checkout -B gallery-data
+          
           git add assets/
           # 检查是否有文件更改
           if [ -z "$(git status --porcelain)" ]; then
             echo "壁纸没有变化，无需推送。"
           else
-            # 如果有更改，使用 --amend 来覆盖上一个提交。
-            # 使用固定的提交信息，因为这个 commit 总是代表最新的画廊状态。
-            # `|| git commit ...` 是一个备用逻辑，用于处理仓库中没有任何提交的初始情况。
+            # 逻辑不变：覆盖上一个提交，或者创建初始提交
             git commit --amend -m "feat(bot): Update wallpaper gallery to latest" || git commit -m "feat(bot): Initial wallpaper gallery"
-            echo "覆盖提交成功，准备强制推送..."
-            # 强制推送到远程仓库以更新历史
-            git push --force
-            echo "壁纸画廊已更新并强制推送至仓库。"
+            echo "覆盖提交成功，准备强制推送至 'gallery-data' 分支..."
+            # 明确地、强制地推送到远程的 gallery-data 分支
+            git push --force origin gallery-data
+            echo "壁纸画廊已更新并强制推送至 'gallery-data' 分支。"
           fi
