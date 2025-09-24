@@ -1,6 +1,6 @@
 # .github/workflows/update-wallpaper.yml
 
-name: Update Wallpaper Gallery on gh-pages
+name: 更新壁纸画廊 (gh-pages)
 
 on:
   schedule:
@@ -17,18 +17,19 @@ jobs:
     steps:
       # 变更 1: 直接检出 gh-pages 分支
       # 所有的操作都将在这个分支上进行
-      - name: Checkout gh-pages branch
+      - name: 检出 gh-pages 分支
         uses: actions/checkout@v4
         with:
           ref: gh-pages # 明确指定工作分支为 gh-pages
 
-      - name: Update Wallpaper Gallery
+      - name: 更新壁纸库
         id: update_gallery
         run: |
           # --- 配置 ---
           MAX_FILES_PER_FOLDER=100
           PAGES_TO_PROCESS=3
-          
+          TOP_RANGE="6M" # 定义 Toplist 范围 (例如 1M, 6M, 1y)
+
           # --- 初始化 ---
           # 确保目标目录存在
           mkdir -p assets/landscape assets/portrait
@@ -41,18 +42,18 @@ jobs:
           echo "开始获取和过滤新的壁纸..."
           NEW_IMAGES_JSON="[]"
 
-          LAST_PAGE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=1M&purity=100" | jq '.meta.last_page')
+          LAST_PAGE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=${TOP_RANGE}&purity=100" | jq '.meta.last_page')
           if [[ -z "$LAST_PAGE" || "$LAST_PAGE" == "null" || "$LAST_PAGE" -lt 1 ]]; then
             echo "错误：无法获取有效的总页数。跳过本次更新。"
             exit 0
           fi
-          echo "壁纸总页数 (toplist/1M): $LAST_PAGE"
+          echo "壁纸总页数 (toplist/${TOP_RANGE}): $LAST_PAGE"
           
           for i in $(seq 1 $PAGES_TO_PROCESS); do
             RANDOM_PAGE=$(( RANDOM % LAST_PAGE + 1 ))
             echo "正在处理第 ${i}/${PAGES_TO_PROCESS} 页 (API Page: ${RANDOM_PAGE})..."
           
-            API_RESPONSE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=6M&purity=100&page=${RANDOM_PAGE}")
+            API_RESPONSE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=${TOP_RANGE}&purity=100&page=${RANDOM_PAGE}")
             PAGE_IMAGES=$(echo "$API_RESPONSE" | jq -c '.data[]')
           
             if [[ -z "$PAGE_IMAGES" || $(echo "$PAGE_IMAGES" | wc -l) -eq 0 ]]; then continue; fi
@@ -113,7 +114,6 @@ jobs:
 
           # --- 清理旧文件 (FIFO) ---
           echo "开始清理旧文件以维持数量上限..."
-          # ... (清理逻辑保持不变) ...
           TOTAL_LANDSCAPE=$(echo "$LANDSCAPE_META" | jq 'length')
           if [ "$TOTAL_LANDSCAPE" -gt "$MAX_FILES_PER_FOLDER" ]; then
             NUM_TO_DELETE=$((TOTAL_LANDSCAPE - MAX_FILES_PER_FOLDER))
@@ -146,14 +146,13 @@ jobs:
           echo "$LANDSCAPE_META" | jq '{ "updated_at": "'$(date --iso-8601=seconds)'", "count": length, "data": . }' > assets/landscape/meta.json
           echo "$PORTRAIT_META"  | jq '{ "updated_at": "'$(date --iso-8601=seconds)'", "count": length, "data": . }' > assets/portrait/meta.json
 
-          # ... (索引文件生成逻辑保持不变) ...
           ls assets/landscape/ | jq -R . | jq -s . > assets/landscape/index.json
           ls assets/portrait/ | jq -R . | jq -s . > assets/portrait/index.json
           jq 'del(.[] | select(. == "index.json" or . == "meta.json"))' assets/landscape/index.json > tmp.$$.json && mv tmp.$$.json assets/landscape/index.json
           jq 'del(.[] | select(. == "index.json" or . == "meta.json"))' assets/portrait/index.json > tmp.$$.json && mv tmp.$$.json assets/portrait/index.json
 
       # 变更 2: 提交并推送到 gh-pages 分支
-      - name: Commit and Push to gh-pages branch
+      - name: 提交并推送到 gh-pages 分支
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
@@ -164,7 +163,7 @@ jobs:
             echo "壁纸没有变化，无需推送。"
           else
             # 使用常规提交，而不是 --amend
-            git commit -m "feat(bot): Update wallpaper gallery assets"
+            git commit -m "feat(bot): 更新壁纸库资源"
             echo "提交成功，准备推送至 'gh-pages' 分支..."
             # 推送到远程的 gh-pages 分支
             git push origin gh-pages
