@@ -20,28 +20,39 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      # 步骤 1: 检出 main 分支的代码
-      # 这是你的网站框架
-      - name: Checkout main branch 🛎️
+      # 步骤 1: 检出 gh-pages 分支到临时目录，目的是为了获取 assets 文件夹
+      - name: Checkout gh-pages branch into a temp directory
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: ./gh-pages-temp # 检出到子目录 gh-pages-temp
+
+      # 步骤 2: 检出 main 分支的最新代码（这会覆盖当前工作目录）
+      - name: Checkout main branch
         uses: actions/checkout@v4
         with:
           ref: main
 
-      # 变更 2: 移除了检出 gallery-data 和合并文件的步骤
-      # 因为现在两个工作流直接操作 gh-pages 分支
+      # 步骤 3: 同步 main 分支的内容到临时目录
+      # 使用 rsync 命令，它会用 main 分支的文件更新 gh-pages-temp 目录
+      # -r: 递归, -u: 只在源文件较新时才更新, -a: 归档模式
+      # --delete: 会删除临时目录中有，但 main 分支没有的文件（但我们排除了 assets）
+      # --exclude: 排除不需要同步的文件夹
+      - name: Sync main branch content to temp directory
+        run: |
+          rsync -avru --delete \
+          --exclude '.git' \
+          --exclude '.github' \
+          --exclude 'gh-pages-temp' \
+          ./ ./gh-pages-temp/
 
-      # 步骤 2 (原步骤 4): 部署到 gh-pages 分支
+      # 步骤 4: 部署合并后的临时目录到 gh-pages 分支
       - name: Deploy to gh-pages branch 🚀
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # 变更 3: 不再需要指定 publish_dir，默认为当前目录
-          # publish_dir: ./public
+          # 关键: 指定我们准备好的、包含所有正确文件的目录
+          publish_dir: ./gh-pages-temp
           publish_branch: gh-pages
-
-          # 变更 4 (关键): 保留目标分支中不属于本次部署的文件
-          # 这会防止 assets 文件夹被删除
-          keep_files: true
-
-          # (可选) 自定义提交信息
+          # 因为我们已经手动准备好了所有文件，所以不再需要 force_orphan 或 keep_files
           commit_message: "Deploy: Update site from main branch"
