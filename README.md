@@ -1,6 +1,6 @@
 # GitHub Release Downloader | GitHub 最新 Release 下载器
 
-一个简洁的网页工具，用于快速查找、浏览和下载任何 GitHub 公开仓库的最新或历史 Release 版本。更新测试
+一个简洁的网页工具，用于快速查找、浏览和下载任何 GitHub 公开仓库的最新或历史 Release 版本。
 
 ## ✨ 功能
 
