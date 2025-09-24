@@ -1,6 +1,6 @@
 # .github/workflows/update-wallpaper.yml
 
-name: Update Wallpaper Gallery
+name: Update Wallpaper Gallery on gh-pages
 
 on:
   schedule:
@@ -15,13 +15,12 @@ jobs:
   update-gallery:
     runs-on: ubuntu-latest
     steps:
-      # 变更点 1: 检出专门用于存放壁纸数据的分支 (gallery-data)
-      # 这样可以确保 Action 的所有操作都与你的主分支隔离。
-      - name: Checkout data branch
+      # 变更 1: 直接检出 gh-pages 分支
+      # 所有的操作都将在这个分支上进行
+      - name: Checkout gh-pages branch
         uses: actions/checkout@v4
         with:
-          ref: gallery-data # 明确指定机器人工作的分支
-          fetch-depth: 0    # 依然需要完整历史以支持 --amend
+          ref: gh-pages # 明确指定工作分支为 gh-pages
 
       - name: Update Wallpaper Gallery
         id: update_gallery
@@ -29,11 +28,13 @@ jobs:
           # --- 配置 ---
           MAX_FILES_PER_FOLDER=100
           PAGES_TO_PROCESS=3
-          DUPLICATE_THRESHOLD=0.7
-
+          
           # --- 初始化 ---
+          # 确保目标目录存在
           mkdir -p assets/landscape assets/portrait
+          # 如果元数据文件不存在，则创建空的
           touch assets/landscape/meta.json assets/portrait/meta.json
+          # 读取已存在的图片ID，防止重复下载
           EXISTING_IDS=$(jq -s '(.[0].data // []) + (.[1].data // []) | .[] .id' assets/landscape/meta.json assets/portrait/meta.json)
           
           # --- 数据获取和过滤 ---
@@ -48,51 +49,26 @@ jobs:
           echo "壁纸总页数 (toplist/1M): $LAST_PAGE"
           
           for i in $(seq 1 $PAGES_TO_PROCESS); do
-            MIN_PAGE=$LAST_PAGE
-            for _ in $(seq 1 6); do
-              CURRENT_RANDOM_PAGE=$(( RANDOM % LAST_PAGE + 1 ))
-              if [ "$CURRENT_RANDOM_PAGE" -lt "$MIN_PAGE" ]; then
-                MIN_PAGE="$CURRENT_RANDOM_PAGE"
-              fi
-            done
-            RANDOM_PAGE="$MIN_PAGE"
-          
+            RANDOM_PAGE=$(( RANDOM % LAST_PAGE + 1 ))
             echo "正在处理第 ${i}/${PAGES_TO_PROCESS} 页 (API Page: ${RANDOM_PAGE})..."
           
-            # [变更 2] 将热门列表时间范围从 1y 改为 6M
             API_RESPONSE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=6M&purity=100&page=${RANDOM_PAGE}")
             PAGE_IMAGES=$(echo "$API_RESPONSE" | jq -c '.data[]')
           
-            if [[ -z "$PAGE_IMAGES" ]]; then continue; fi
-          
-            TOTAL_ON_PAGE=$(echo "$PAGE_IMAGES" | wc -l)
-            if [ "$TOTAL_ON_PAGE" -eq 0 ]; then continue; fi
+            if [[ -z "$PAGE_IMAGES" || $(echo "$PAGE_IMAGES" | wc -l) -eq 0 ]]; then continue; fi
           
             FRESH_IMAGES_ON_PAGE="[]"
-
             while read -r image_json; do
               IMAGE_ID=$(echo "$image_json" | jq -r '.id')
               if echo "$EXISTING_IDS" | grep -q "\"$IMAGE_ID\""; then
-                # 如果图片已存在，则跳过此图片
                 continue
               else
-                # 如果是新图片，则添加到本页的新图片列表中
                 FRESH_IMAGES_ON_PAGE=$(echo "$FRESH_IMAGES_ON_PAGE" | jq --argjson img "$image_json" '. + [$img]')
               fi
             done <<< "$PAGE_IMAGES"
 
-            # [变更 1] 移除重复率检查逻辑。
-            # 现在无论重复图片有多少，只要有新图片就会被处理。
-            # DUPLICATE_RATE=$(echo "scale=2; $DUPLICATES_ON_PAGE / $TOTAL_ON_PAGE" | bc)
-            # if (( $(echo "$DUPLICATE_RATE > $DUPLICATE_THRESHOLD" | bc -l) )); then
-            #   echo "警告：重复率 (${DUPLICATE_RATE}) 过高，放弃处理此页。"
-            #   continue
-            # fi
-
-            # 将本次找到的新图片ID，立刻加入到EXISTING_IDS中，防止同一次运行中重复添加
             FRESH_IDS=$(echo "$FRESH_IMAGES_ON_PAGE" | jq -r '.[] .id')
             EXISTING_IDS="${EXISTING_IDS}\n${FRESH_IDS}"
-
             NEW_IMAGES_JSON=$(echo "$NEW_IMAGES_JSON" | jq --argjson fresh "$FRESH_IMAGES_ON_PAGE" '. + $fresh')
             echo "从本页成功添加 $(echo "$FRESH_IMAGES_ON_PAGE" | jq 'length') 张新图。"
           done
@@ -104,11 +80,8 @@ jobs:
           
           # --- 处理、排序和下载 ---
           echo "开始处理和下载 $(echo "$NEW_IMAGES_JSON" | jq 'length') 张新壁纸..."
-          # 采用更稳健的方式处理元数据
-          # 先读取旧的元数据
           OLD_LANDSCAPE_META=$(jq '.data // []' assets/landscape/meta.json)
           OLD_PORTRAIT_META=$(jq '.data // []' assets/portrait/meta.json)
-          # 将新的元数据收集到临时变量中
           NEW_LANDSCAPE_ENTRIES="[]"
           NEW_PORTRAIT_ENTRIES="[]"
 
@@ -135,12 +108,12 @@ jobs:
             fi
           done < <(echo "$NEW_IMAGES_JSON" | jq -c '.[]')
 
-          # 下载和分类完成后，一次性合并新旧元数据
           LANDSCAPE_META=$(jq -s '.[0] + .[1]' <(echo "$OLD_LANDSCAPE_META") <(echo "$NEW_LANDSCAPE_ENTRIES"))
           PORTRAIT_META=$(jq -s '.[0] + .[1]' <(echo "$OLD_PORTRAIT_META") <(echo "$NEW_PORTRAIT_ENTRIES"))
 
           # --- 清理旧文件 (FIFO) ---
           echo "开始清理旧文件以维持数量上限..."
+          # ... (清理逻辑保持不变) ...
           TOTAL_LANDSCAPE=$(echo "$LANDSCAPE_META" | jq 'length')
           if [ "$TOTAL_LANDSCAPE" -gt "$MAX_FILES_PER_FOLDER" ]; then
             NUM_TO_DELETE=$((TOTAL_LANDSCAPE - MAX_FILES_PER_FOLDER))
@@ -167,35 +140,33 @@ jobs:
             PORTRAIT_META=$(echo "$PORTRAIT_META" | jq ".[${NUM_TO_DELETE}:]")
           fi
 
+
           # --- 写入元数据和索引文件 ---
           echo "正在写回最终的元数据和索引文件..."
           echo "$LANDSCAPE_META" | jq '{ "updated_at": "'$(date --iso-8601=seconds)'", "count": length, "data": . }' > assets/landscape/meta.json
           echo "$PORTRAIT_META"  | jq '{ "updated_at": "'$(date --iso-8601=seconds)'", "count": length, "data": . }' > assets/portrait/meta.json
 
+          # ... (索引文件生成逻辑保持不变) ...
           ls assets/landscape/ | jq -R . | jq -s . > assets/landscape/index.json
           ls assets/portrait/ | jq -R . | jq -s . > assets/portrait/index.json
           jq 'del(.[] | select(. == "index.json" or . == "meta.json"))' assets/landscape/index.json > tmp.$$.json && mv tmp.$$.json assets/landscape/index.json
           jq 'del(.[] | select(. == "index.json" or . == "meta.json"))' assets/portrait/index.json > tmp.$$.json && mv tmp.$$.json assets/portrait/index.json
 
-      # 变更点 2: 修改提交和推送的逻辑，确保所有操作都在 'gallery-data' 分支上
-      - name: Commit and Push to data branch
+      # 变更 2: 提交并推送到 gh-pages 分支
+      - name: Commit and Push to gh-pages branch
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          
-          # 为确保万无一失，再次强制切换到 gallery-data 分支。
-          # -B 参数意味着：如果分支已存在，则重置它；如果不存在，则创建它。
-          git checkout -B gallery-data
           
           git add assets/
           # 检查是否有文件更改
           if [ -z "$(git status --porcelain)" ]; then
             echo "壁纸没有变化，无需推送。"
           else
-            # 逻辑不变：覆盖上一个提交，或者创建初始提交
-            git commit --amend -m "feat(bot): Update wallpaper gallery to latest" || git commit -m "feat(bot): Initial wallpaper gallery"
-            echo "覆盖提交成功，准备强制推送至 'gallery-data' 分支..."
-            # 明确地、强制地推送到远程的 gallery-data 分支
-            git push --force origin gallery-data
-            echo "壁纸画廊已更新并强制推送至 'gallery-data' 分支。"
+            # 使用常规提交，而不是 --amend
+            git commit -m "feat(bot): Update wallpaper gallery assets"
+            echo "提交成功，准备推送至 'gh-pages' 分支..."
+            # 推送到远程的 gh-pages 分支
+            git push origin gh-pages
+            echo "壁纸画廊已更新并推送至 'gh-pages' 分支。"
           fi
