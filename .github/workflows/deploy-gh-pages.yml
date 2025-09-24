@@ -1,40 +1,65 @@
 # 工作流名称
-name: Build and Deploy to GitHub Pages
+name: 构建并部署到 GitHub Pages
 
 # 工作流触发器
 on:
-  # 变更 1: 只在 main 分支有 push 操作时触发
+  # 当 main 分支有 push 操作时触发
   push:
     branches:
       - main
-
-  # 允许在 GitHub Actions 页面手动触发此工作流
+  # 允许在 Actions 页面手动触发
   workflow_dispatch:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      # 步骤 1: 检出 main 分支作为源内容
-      - name: Checkout main branch
+      # 步骤 1: 检出 main 分支，作为部署内容的来源
+      - name: 检出 main 分支 (源)
         uses: actions/checkout@v4
         with:
           ref: main
 
-      # 步骤 2: 部署到 gh-pages 分支
-      - name: Deploy to gh-pages
-        uses: peaceiris/actions-gh-pages@v4
+      # 步骤 2: 检出 gh-pages 分支到临时目录，以保留 assets 等文件
+      - name: 检出 gh-pages 分支 (目标)
+        uses: actions/checkout@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          # 关键：告诉 action 我们要保留目标分支的文件
-          keep_files: true
-          # 我们不再使用复杂的 rsync 和手动 checkout
-          # 直接使用 action 的 `keep_files` 选项，这才是它的正确用法
-          # 它会把 main 分支的内容叠加到 gh-pages 分支上，并保留 gh-pages 上独有的文件
-          commit_message: "Deploy: Update site from main branch"
+          ref: gh-pages
+          path: gh-pages-temp # 将 gh-pages 分支的内容下载到这个子目录
+
+      # 步骤 3: 将 main 分支的内容同步到 gh-pages 临时目录
+      # -a: 归档模式, -v: 显示同步过程
+      # --exclude: 排除掉不需要同步的目录，防止覆盖 .git 历史或造成无限循环
+      # 这个命令会用 main 分支的文件更新 gh-pages-temp 目录里的同名文件
+      # 但它不会删除 gh-pages-temp 目录中独有的文件（比如 assets 文件夹）
+      - name: 同步文件到 gh-pages 临时目录
+        run: |
+          rsync -av --exclude 'gh-pages-temp' --exclude '.git' --exclude '.github' ./ gh-pages-temp/
+
+      # 步骤 4: 提交并推送到 gh-pages 分支 (采用手动Git操作)
+      - name: 提交并推送到 gh-pages
+        run: |
+          cd gh-pages-temp # 首先，进入我们准备好的部署目录
+          
+          # 配置 Git 提交者信息
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # 添加所有文件更改到暂存区
+          git add .
+          
+          # 检查是否有文件变动，如果没有则直接退出
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "没有文件变动，无需提交。"
+            exit 0
+          fi
+          
+          # 创建一个新的提交
+          git commit -m "部署：从 main 分支更新网站内容"
+          # 将提交推送到远程的 gh-pages 分支
+          git push origin gh-pages
+          
+          echo "✅ 网站内容已成功部署到 gh-pages 分支。"
