@@ -17,6 +17,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # <--- 变更点 1: 获取完整历史
+          # amend 操作需要基于上一个 commit，因此不能使用默认的浅克隆 (fetch-depth: 1)
+          fetch-depth: 0
 
       - name: Update Wallpaper Gallery
         id: update_gallery
@@ -24,6 +28,7 @@ jobs:
           # --- 配置 ---
           MAX_FILES_PER_FOLDER=100
           PAGES_TO_PROCESS=3
+          DUPLICATE_THRESHOLD=0.7
 
           # --- 初始化 ---
           mkdir -p assets/landscape assets/portrait
@@ -34,80 +39,59 @@ jobs:
           echo "开始获取和过滤新的壁纸..."
           NEW_IMAGES_JSON="[]"
 
-          LAST_PAGE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=6M&purity=100" | jq '.meta.last_page')
+          LAST_PAGE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=1M&purity=100" | jq '.meta.last_page')
           if [[ -z "$LAST_PAGE" || "$LAST_PAGE" == "null" || "$LAST_PAGE" -lt 1 ]]; then
             echo "错误：无法获取有效的总页数。跳过本次更新。"
             exit 0
           fi
-          echo "壁纸总页数 (toplist/6M): $LAST_PAGE"
+          echo "壁纸总页数 (toplist/1M): $LAST_PAGE"
           
-          # [修正1 新增] 初始化一个字符串来存储本次运行已处理的页面
-          PROCESSED_PAGES=" " 
-
           for i in $(seq 1 $PAGES_TO_PROCESS); do
-            # [修正1 修改] 使用循环来确保选中的页面是唯一的
-            while true; do
-              echo "正在根据权重选择随机页面..."
-              PROB_ROLL=$(( RANDOM % 1000 + 1 ))
-
-              if [ "$PROB_ROLL" -le 800 ]; then
-                RANDOM_PAGE=$(( RANDOM % 10 + 1 ))
-                echo "权重命中范围 [1-10]，初步选中页面: ${RANDOM_PAGE}"
-              elif [ "$PROB_ROLL" -le 990 ]; then
-                UPPER_BOUND=$( [ "100" -lt "$LAST_PAGE" ] && echo "100" || echo "$LAST_PAGE" )
-                if [ "$UPPER_BOUND" -gt 10 ]; then
-                  RANGE=$(( UPPER_BOUND - 10 ))
-                  RANDOM_PAGE=$(( RANDOM % RANGE + 11 ))
-                else
-                  RANDOM_PAGE=$(( RANDOM % 10 + 1 ))
-                fi
-                echo "权重命中范围 [11-100]，初步选中页面: ${RANDOM_PAGE}"
-              else
-                if [ "$LAST_PAGE" -gt 100 ]; then
-                  RANGE=$(( LAST_PAGE - 100 ))
-                  RANDOM_PAGE=$(( RANDOM % RANGE + 101 ))
-                  echo "权重命中范围 [101-${LAST_PAGE}]，初步选中页面: ${RANDOM_PAGE}"
-                else
-                  RANDOM_PAGE=$(( RANDOM % LAST_PAGE + 1 ))
-                  echo "权重命中范围 [101+] (回退)，初步选中页面: ${RANDOM_PAGE}"
-                fi
-              fi
-              
-              # 检查选中的页面是否已经处理过
-              if [[ $PROCESSED_PAGES == *" $RANDOM_PAGE "* ]]; then
-                echo "页面 ${RANDOM_PAGE} 在本次运行中已被处理过，正在重新选择..."
-              else
-                break # 如果是新页面，则跳出循环
+            MIN_PAGE=$LAST_PAGE
+            for _ in $(seq 1 6); do
+              CURRENT_RANDOM_PAGE=$(( RANDOM % LAST_PAGE + 1 ))
+              if [ "$CURRENT_RANDOM_PAGE" -lt "$MIN_PAGE" ]; then
+                MIN_PAGE="$CURRENT_RANDOM_PAGE"
               fi
             done
-            
-            # 将确认唯一的页面添加到已处理列表
-            PROCESSED_PAGES+="$RANDOM_PAGE "
-            echo "最终确认处理页面: ${RANDOM_PAGE}"
-
-            echo "正在处理第 ${i}/${PAGES_TO_PROCESS} 次更新 (API Page: ${RANDOM_PAGE})..."
+            RANDOM_PAGE="$MIN_PAGE"
           
+            echo "正在处理第 ${i}/${PAGES_TO_PROCESS} 页 (API Page: ${RANDOM_PAGE})..."
+          
+            # [变更 2] 将热门列表时间范围从 1y 改为 6M
             API_RESPONSE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=6M&purity=100&page=${RANDOM_PAGE}")
             PAGE_IMAGES=$(echo "$API_RESPONSE" | jq -c '.data[]')
           
             if [[ -z "$PAGE_IMAGES" ]]; then continue; fi
-            
-            # ... (后续脚本保持不变) ...
+          
             TOTAL_ON_PAGE=$(echo "$PAGE_IMAGES" | wc -l)
             if [ "$TOTAL_ON_PAGE" -eq 0 ]; then continue; fi
           
             FRESH_IMAGES_ON_PAGE="[]"
+
             while read -r image_json; do
               IMAGE_ID=$(echo "$image_json" | jq -r '.id')
               if echo "$EXISTING_IDS" | grep -q "\"$IMAGE_ID\""; then
+                # 如果图片已存在，则跳过此图片
                 continue
               else
+                # 如果是新图片，则添加到本页的新图片列表中
                 FRESH_IMAGES_ON_PAGE=$(echo "$FRESH_IMAGES_ON_PAGE" | jq --argjson img "$image_json" '. + [$img]')
               fi
             done <<< "$PAGE_IMAGES"
 
+            # [变更 1] 移除重复率检查逻辑。
+            # 现在无论重复图片有多少，只要有新图片就会被处理。
+            # DUPLICATE_RATE=$(echo "scale=2; $DUPLICATES_ON_PAGE / $TOTAL_ON_PAGE" | bc)
+            # if (( $(echo "$DUPLICATE_RATE > $DUPLICATE_THRESHOLD" | bc -l) )); then
+            #   echo "警告：重复率 (${DUPLICATE_RATE}) 过高，放弃处理此页。"
+            #   continue
+            # fi
+
+            # 将本次找到的新图片ID，立刻加入到EXISTING_IDS中，防止同一次运行中重复添加
             FRESH_IDS=$(echo "$FRESH_IMAGES_ON_PAGE" | jq -r '.[] .id')
             EXISTING_IDS="${EXISTING_IDS}\n${FRESH_IDS}"
+
             NEW_IMAGES_JSON=$(echo "$NEW_IMAGES_JSON" | jq --argjson fresh "$FRESH_IMAGES_ON_PAGE" '. + $fresh')
             echo "从本页成功添加 $(echo "$FRESH_IMAGES_ON_PAGE" | jq 'length') 张新图。"
           done
@@ -117,11 +101,16 @@ jobs:
             exit 0
           fi
           
+          # --- 处理、排序和下载 ---
           echo "开始处理和下载 $(echo "$NEW_IMAGES_JSON" | jq 'length') 张新壁纸..."
+          # 采用更稳健的方式处理元数据
+          # 先读取旧的元数据
           OLD_LANDSCAPE_META=$(jq '.data // []' assets/landscape/meta.json)
           OLD_PORTRAIT_META=$(jq '.data // []' assets/portrait/meta.json)
+          # 将新的元数据收集到临时变量中
           NEW_LANDSCAPE_ENTRIES="[]"
           NEW_PORTRAIT_ENTRIES="[]"
+
           while read -r image_json; do
             ID=$(echo "$image_json" | jq -r '.id')
             PATH_URL=$(echo "$image_json" | jq -r '.path')
@@ -130,8 +119,10 @@ jobs:
             EXTENSION="${PATH_URL##*.}"
             FILENAME="${ID}.${EXTENSION}"
             TIMESTAMP=$(date --iso-8601=seconds)
+
             NEW_META_ENTRY=$(jq -n --arg id "$ID" --arg source "$SOURCE_URL" --arg ts "$TIMESTAMP" \
               '{id: $id, source: $source, added_at: $ts}')
+
             if (( $(echo "$RATIO >= 1.0" | bc -l) )); then
               echo "下载横屏图片: ${FILENAME}"
               curl -s -L -o "assets/landscape/${FILENAME}" "$PATH_URL"
@@ -143,8 +134,11 @@ jobs:
             fi
           done < <(echo "$NEW_IMAGES_JSON" | jq -c '.[]')
 
+          # 下载和分类完成后，一次性合并新旧元数据
           LANDSCAPE_META=$(jq -s '.[0] + .[1]' <(echo "$OLD_LANDSCAPE_META") <(echo "$NEW_LANDSCAPE_ENTRIES"))
           PORTRAIT_META=$(jq -s '.[0] + .[1]' <(echo "$OLD_PORTRAIT_META") <(echo "$NEW_PORTRAIT_ENTRIES"))
+
+          # --- 清理旧文件 (FIFO) ---
           echo "开始清理旧文件以维持数量上限..."
           TOTAL_LANDSCAPE=$(echo "$LANDSCAPE_META" | jq 'length')
           if [ "$TOTAL_LANDSCAPE" -gt "$MAX_FILES_PER_FOLDER" ]; then
@@ -158,6 +152,7 @@ jobs:
             done <<< "$TO_DELETE"
             LANDSCAPE_META=$(echo "$LANDSCAPE_META" | jq ".[${NUM_TO_DELETE}:]")
           fi
+
           TOTAL_PORTRAIT=$(echo "$PORTRAIT_META" | jq 'length')
           if [ "$TOTAL_PORTRAIT" -gt "$MAX_FILES_PER_FOLDER" ]; then
             NUM_TO_DELETE=$((TOTAL_PORTRAIT - MAX_FILES_PER_FOLDER))
@@ -171,25 +166,32 @@ jobs:
             PORTRAIT_META=$(echo "$PORTRAIT_META" | jq ".[${NUM_TO_DELETE}:]")
           fi
 
+          # --- 写入元数据和索引文件 ---
           echo "正在写回最终的元数据和索引文件..."
           echo "$LANDSCAPE_META" | jq '{ "updated_at": "'$(date --iso-8601=seconds)'", "count": length, "data": . }' > assets/landscape/meta.json
           echo "$PORTRAIT_META"  | jq '{ "updated_at": "'$(date --iso-8601=seconds)'", "count": length, "data": . }' > assets/portrait/meta.json
+
           ls assets/landscape/ | jq -R . | jq -s . > assets/landscape/index.json
           ls assets/portrait/ | jq -R . | jq -s . > assets/portrait/index.json
           jq 'del(.[] | select(. == "index.json" or . == "meta.json"))' assets/landscape/index.json > tmp.$$.json && mv tmp.$$.json assets/landscape/index.json
           jq 'del(.[] | select(. == "index.json" or . == "meta.json"))' assets/portrait/index.json > tmp.$$.json && mv tmp.$$.json assets/portrait/index.json
 
+      # <--- 变更点 2: 修改提交和推送的逻辑
       - name: Commit and Push new gallery
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add assets/
-          if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "feat(bot): Update wallpaper gallery, add new and remove old"
-            # [修正2] 在 push 之前先 pull --rebase，同步远程的更新
-            git pull --rebase
-            git push
-            echo "壁纸画廊已更新并推送至仓库。"
-          else
+          # 检查是否有文件更改
+          if [ -z "$(git status --porcelain)" ]; then
             echo "壁纸没有变化，无需推送。"
+          else
+            # 如果有更改，使用 --amend 来覆盖上一个提交。
+            # 使用固定的提交信息，因为这个 commit 总是代表最新的画廊状态。
+            # `|| git commit ...` 是一个备用逻辑，用于处理仓库中没有任何提交的初始情况。
+            git commit --amend -m "feat(bot): Update wallpaper gallery to latest" || git commit -m "feat(bot): Initial wallpaper gallery"
+            echo "覆盖提交成功，准备强制推送..."
+            # 强制推送到远程仓库以更新历史
+            git push --force
+            echo "壁纸画廊已更新并强制推送至仓库。"
           fi
