@@ -1,0 +1,84 @@
+# 工作流名称
+name: Build and Deploy to GitHub Pages
+
+# 工作流触发器
+on:
+  # 1. 当 main 或 gallery-data 分支有 push 操作时触发
+  push:
+    branches:
+      - main
+      - gallery-data
+  
+  # 2. 允许在 GitHub Actions 页面手动触发此工作流（方便调试）
+  workflow_dispatch:
+
+# 为工作流设置权限，这是新版 GitHub Actions 的推荐做法
+permissions:
+  contents: write # 允许工作流修改仓库内容（例如，推送到 gh-pages 分支）
+  pages: write    # 允许部署到 GitHub Pages
+  id-token: write # 允许使用 OIDC token 进行身份验证
+
+# 定义一个名为 'build-and-deploy' 的作业
+jobs:
+  build-and-deploy:
+    # 指定运行此作业的操作系统环境
+    runs-on: ubuntu-latest
+    
+    # 作业中的步骤
+    steps:
+      # 步骤 1: 检出（Checkout）main 分支的代码
+      # 这是你的网站框架，如 HTML, CSS, JS 文件
+      - name: Checkout main branch 🛎️
+        uses: actions/checkout@v4
+        with:
+          # 明确指定检出 main 分支
+          ref: main
+
+      # 步骤 2: 检出（Checkout）gallery-data 分支的内容到临时目录
+      # 这里只为了获取 assets 文件夹
+      - name: Checkout gallery-data branch 🖼️
+        uses: actions/checkout@v4
+        with:
+          # 指定包含 assets 文件夹的 gallery-data 分支
+          ref: gallery-data
+          # 将此分支的内容下载到一个名为 '.gallery-data' 的临时子目录中
+          # 这样可以避免与 main 分支的文件冲突
+          path: ./.gallery-data
+
+      # 步骤 3: 准备和合并文件
+      # 将 main 分支的文件和 gallery-data 的 assets 文件夹合并
+      - name: Combine files ⚙️
+        run: |
+          # 创建一个用于部署的目录，名为 'public'
+          mkdir public
+          
+          # 将 main 分支的所有内容（除了 .gallery-data 目录和 .git 等）复制到 public 目录
+          # 使用 rsync 可以更好地控制排除项
+          echo "Copying files from main branch..."
+          rsync -av --progress . ./public --exclude ".gallery-data" --exclude ".git" --exclude ".github" --exclude "public"
+
+          # 检查 .gallery-data/assets 是否存在，如果存在，则复制到 public 目录
+          if [ -d "./.gallery-data/assets" ]; then
+            echo "Assets folder found in gallery-data. Copying..."
+            cp -r ./.gallery-data/assets ./public/
+          else
+            echo "Warning: 'assets' folder not found in gallery-data branch. Skipping."
+          fi
+
+          # (可选) 打印出最终 public 目录的结构，方便调试
+          echo "Final directory structure for deployment:"
+          ls -R ./public
+
+      # 步骤 4: 部署到 gh-pages 分支
+      # 使用社区维护的、非常流行的 action 来完成部署
+      - name: Deploy to gh-pages branch 🚀
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          # GitHub Token 是由 GitHub Actions 自动提供的，用于授权
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # 指定要部署的文件夹，即我们刚刚创建的 'public' 目录
+          publish_dir: ./public
+          # 指定目标分支
+          publish_branch: gh-pages
+          # (可选) 自定义提交信息
+          commit_message: "Deploy: ${{ github.event.head_commit.message }}"
