@@ -8,6 +8,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = document.querySelector('.modal .close');
     const loader = document.getElementById('loader');
 
+    // --- CDN 配置 ---
+    const GCORE_CDN_PREFIX = 'https://gcore.jsdelivr.net/gh/hfugghg/GitHub_Release_Download@gh-pages/';
+    let CDN_PREFIX = ''; // 默认禁用 CDN，将通过 IP 检测动态设置
+
+    // --- IP 地理位置检测与 CDN 设置 ---
+    async function checkAndSetCDN() {
+        try {
+            // 使用 sessionStorage 缓存检测结果，避免每次刷新都请求 API
+            const cachedStatus = sessionStorage.getItem('cdnStatus');
+            if (cachedStatus) {
+                if (cachedStatus === 'enabled') {
+                    CDN_PREFIX = GCORE_CDN_PREFIX;
+                    console.log("使用缓存的 CDN 设置：启用");
+                } else {
+                    console.log("使用缓存的 CDN 设置：禁用");
+                }
+                return;
+            }
+
+            const response = await fetch('https://ipapi.co/json/');
+            if (!response.ok) {
+                throw new Error('IP API request failed');
+            }
+            const data = await response.json();
+            if (data.country_code === 'CN') {
+                console.log("检测到中国IP，启用 Gcore CDN");
+                CDN_PREFIX = GCORE_CDN_PREFIX;
+                sessionStorage.setItem('cdnStatus', 'enabled');
+            } else {
+                console.log("非中国IP，使用本地资源");
+                sessionStorage.setItem('cdnStatus', 'disabled');
+            }
+        } catch (error) {
+            console.warn("IP地理位置检测失败，将使用本地资源。", error);
+            sessionStorage.setItem('cdnStatus', 'disabled'); // 检测失败也缓存状态，避免重试
+        }
+    }
+
     // 状态
     let imageMetas = {};
     let allImages = []; // 用于瀑布流网格
@@ -15,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let landscapeImages = []; // 用于横向轮播
     let loadedImageCount = 0;
     let isLoading = false;
-    const imagesPerLoad = 8; // 已根据建议降低并发数
+    const imagesPerLoad = 8;
 
     // 瀑布流布局状态
     const targetColumnWidth = 220;
@@ -26,14 +64,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let isCurrentlyLandscape = window.innerWidth > window.innerHeight;
 
-    // --- 新增：轮播图懒加载的状态管理器 ---
+    // 轮播图懒加载的状态管理器
     let carouselLoader = {
         timer: null,
         currentIndex: 0,
         images: []
     };
-    // 定义每张轮播图加载的间隔时间（毫秒），您可以根据轮播速度调整
-    const CAROUSEL_LOAD_INTERVAL = 5000; // 5秒加载一张
+    const CAROUSEL_LOAD_INTERVAL = 5000;
 
     // Fisher-Yates 洗牌算法
     function shuffleArray(array) {
@@ -43,35 +80,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- 核心修改：重写轮播图设置和懒加载逻辑 ---
-
-    /**
-     * 实际执行加载的函数，将 data-src 替换为 src
-     */
+    // --- 修改：背景轮播图加载逻辑 ---
     function loadNextCarouselImage() {
         if (carouselLoader.images.length === 0) return;
 
-        // 使用模运算(%)来实现无限循环加载
         const imgElement = carouselLoader.images[carouselLoader.currentIndex % carouselLoader.images.length];
 
-        // 如果图片有 data-src 属性（意味着还没被加载），就加载它
-        if (imgElement.dataset.src) {
-            imgElement.src = imgElement.dataset.src;
-            // 移除 data-src 防止重复加载
-            imgElement.removeAttribute('data-src');
+        if (imgElement.dataset.primarySrc) {
+            const primarySrc = imgElement.dataset.primarySrc;
+            const fallbackSrc = imgElement.dataset.fallbackSrc;
+
+            // 仅当存在备用资源时才设置复杂的 onerror 回退逻辑
+            if (fallbackSrc) {
+                imgElement.onerror = () => {
+                    console.warn(`轮播图 CDN 资源加载失败: ${primarySrc}, 尝试备用资源...`);
+                    imgElement.src = fallbackSrc;
+                    imgElement.onerror = null; // 清除处理器，防止备用资源也失败时无限循环
+                };
+            } else {
+                imgElement.onerror = () => {
+                    console.error(`轮播图资源加载失败: ${primarySrc}`);
+                    imgElement.onerror = null;
+                };
+            }
+
+            imgElement.src = primarySrc;
+
+            imgElement.removeAttribute('data-primary-src');
+            imgElement.removeAttribute('data-fallback-src');
         }
 
         carouselLoader.currentIndex++;
-
-        // 设置定时器，在指定间隔后加载下一张图片
         carouselLoader.timer = setTimeout(loadNextCarouselImage, CAROUSEL_LOAD_INTERVAL);
     }
 
-    /**
-     * 设置轮播图的初始结构，并启动懒加载
-     */
+    // --- 修改：Carousel 设置逻辑 ---
     function setupCarousel() {
-        // 停止并清除旧的定时器，防止窗口大小改变时产生多个定时器
         if (carouselLoader.timer) {
             clearTimeout(carouselLoader.timer);
         }
@@ -83,36 +127,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (imagesForCarousel.length === 0) return;
 
-        // 为了动画无缝衔接，如果图片少于20张，就复制一份
         let displayList = [...imagesForCarousel];
         if (displayList.length > 0 && displayList.length < 20) {
             displayList = [...displayList, ...displayList];
         }
 
-        // 1. 创建所有 img 标签，但不设置 src，而是设置 data-src
         displayList.forEach(imageInfo => {
             const bgImg = document.createElement('img');
-            // 将真实的图片地址存放在 data-src 中
-            bgImg.dataset.src = `assets/${imageInfo.type}/${imageInfo.id}.${imageInfo.ext}`;
+            const relativePath = `assets/${imageInfo.type}/${imageInfo.id}.${imageInfo.ext}`;
+            
+            // 根据是否启用 CDN 设置图片源
+            if (CDN_PREFIX) {
+                bgImg.dataset.primarySrc = `${CDN_PREFIX}${relativePath}`;
+                bgImg.dataset.fallbackSrc = relativePath;
+            } else {
+                bgImg.dataset.primarySrc = relativePath;
+            }
             backgroundCarousel.appendChild(bgImg);
         });
 
-        // 2. 准备启动懒加载
         carouselLoader.images = Array.from(backgroundCarousel.children);
         carouselLoader.currentIndex = 0;
 
         if (carouselLoader.images.length > 0) {
-            // 3. 立即加载前两张图片，满足您的启动需求
-            // 加载第一张
             loadNextCarouselImage();
-            // 立即加载第二张 (通过手动调用并清除定时器，然后再重新启动定时器)
             if (carouselLoader.images.length > 1) {
-                clearTimeout(carouselLoader.timer); // 清除第一次调用产生的定时器
-                loadNextCarouselImage(); // 这会加载第二张，并为第三张设置新的定时器
+                clearTimeout(carouselLoader.timer);
+                loadNextCarouselImage();
             }
         }
     }
-
 
     // 瀑布流布局计算
     function setupMasonry() {
@@ -126,7 +170,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function positionItem(item) {
         const img = item.querySelector('img');
         const imgAspectRatio = img.naturalWidth / img.naturalHeight;
-
         const isDoubleColumnCandidate = imgAspectRatio > 1.6 && img.naturalWidth > 1200 && numColumns > 1;
 
         if (isDoubleColumnCandidate) {
@@ -156,11 +199,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.style.width = `${itemWidth}px`;
 
                 const itemHeight = (img.naturalHeight / img.naturalWidth) * itemWidth;
-
                 const newHeight = top + itemHeight + gap;
                 columnHeights[columnIndex] = newHeight;
                 columnHeights[columnIndex + 1] = newHeight;
-
             } else {
                 positionSingleColumnItem(item);
             }
@@ -187,19 +228,38 @@ document.addEventListener('DOMContentLoaded', () => {
         columnHeights[columnIndex] += itemHeight + gap;
     }
 
+    // --- 修改：带回退逻辑的 fetch 函数 ---
+    async function fetchWithFallback(relativePath) {
+        // 仅当 CDN 启用时才使用回退逻辑
+        if (CDN_PREFIX) {
+            const primaryUrl = `${CDN_PREFIX}${relativePath}`;
+            try {
+                const response = await fetch(primaryUrl);
+                if (!response.ok) {
+                    throw new Error(`CDN resource not available: ${response.statusText}`);
+                }
+                return response;
+            } catch (error) {
+                console.warn(`从 CDN (${primaryUrl}) 获取失败, 正在尝试备用路径 (${relativePath})...`, error);
+                return fetch(relativePath);
+            }
+        }
+        // 否则直接使用相对路径
+        return fetch(relativePath);
+    }
 
-    // 图片加载
+    // --- 修改：使用新的 fetchWithFallback 函数加载数据 ---
     async function fetchAndCombineData() {
         try {
             const dataSources = ['portrait', 'landscape'];
             const promises = dataSources.flatMap(type => [
-                fetch(`assets/${type}/index.json`),
-                fetch(`assets/${type}/meta.json`)
+                fetchWithFallback(`assets/${type}/index.json`),
+                fetchWithFallback(`assets/${type}/meta.json`)
             ]);
 
             const responses = await Promise.all(promises);
             for (const res of responses) {
-                if (!res.ok) throw new Error('无法从服务器加载图片数据。');
+                if (!res.ok) throw new Error('无法从服务器加载图片数据（首选和备用路径均失败）。');
             }
             const jsonData = await Promise.all(responses.map(res => res.json()));
 
@@ -239,6 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- 修改：图片加载逻辑 ---
     function loadMoreImages() {
         if (isLoading || loadedImageCount >= allImages.length) return;
         isLoading = true;
@@ -257,7 +318,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         imagesToLoad.forEach(imageInfo => {
             const img = new Image();
-            img.src = `assets/${imageInfo.type}/${imageInfo.id}.${imageInfo.ext}`;
+            const relativePath = `assets/${imageInfo.type}/${imageInfo.id}.${imageInfo.ext}`;
+
             img.alt = `Image ${imageInfo.id}`;
             img.dataset.id = imageInfo.id;
 
@@ -279,9 +341,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 onImageProcessed();
             };
 
-            img.onerror = () => {
-                console.error(`图片加载失败: ${img.src}`);
-                onImageProcessed();
+            // 根据是否启用 CDN 设置图片源和错误处理
+            if (CDN_PREFIX) {
+                const primarySrc = `${CDN_PREFIX}${relativePath}`;
+                img.onerror = () => {
+                    console.warn(`CDN 主资源加载失败: ${primarySrc}, 正在尝试备用资源...`);
+                    img.src = relativePath;
+                    img.onerror = () => {
+                        console.error(`备用资源也加载失败: ${relativePath}`);
+                        onImageProcessed();
+                    };
+                };
+                img.src = primarySrc;
+            } else {
+                img.onerror = () => {
+                    console.error(`资源加载失败: ${relativePath}`);
+                    onImageProcessed();
+                };
+                img.src = relativePath;
             }
         });
 
@@ -330,15 +407,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("屏幕方向改变，重新加载背景轮播");
                 setupCarousel();
             }
-
         }, 200);
     });
 
-    // 初始化加载
+    // --- 修改：初始化加载 ---
     async function initialize() {
         setupMasonry();
+        await checkAndSetCDN(); // 在获取数据前执行 CDN 检测
         await fetchAndCombineData();
-        setupCarousel(); // 设置轮播并启动懒加载
+        setupCarousel();
         loadMoreImages();
     }
 
