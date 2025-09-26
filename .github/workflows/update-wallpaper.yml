@@ -4,8 +4,8 @@ name: 更新壁纸画廊 (gh-pages)
 
 on:
   schedule:
-    # 每小时运行一次
-    - cron: '0 * * * *'
+    # 每12小时运行一次
+    - cron: '0 */12 * * *'
   workflow_dispatch:
 
 permissions:
