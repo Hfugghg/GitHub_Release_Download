@@ -1,37 +1,7 @@
 {
-  "updated_at": "2025-09-26T12:23:04+00:00",
+  "updated_at": "2025-09-27T00:51:33+00:00",
   "count": 100,
   "data": [
-    {
-      "id": "po2rgp",
-      "source": "https://twitter.com/amatizqueen/status/1936696660094222708?t=5hzF6naBFiGOJARpigrFZg&s=19",
-      "added_at": "2025-09-25T16:29:26+00:00"
-    },
-    {
-      "id": "k87lym",
-      "source": "https://x.com/OmarvinG94/status/1350061587038552064",
-      "added_at": "2025-09-25T16:29:29+00:00"
-    },
-    {
-      "id": "m388x8",
-      "source": "https://twitter.com/gishiki_unc/status/1892519804596040004",
-      "added_at": "2025-09-25T16:29:32+00:00"
-    },
-    {
-      "id": "7j3v1o",
-      "source": "https://www.artstation.com/zombie012",
-      "added_at": "2025-09-25T16:29:32+00:00"
-    },
-    {
-      "id": "zpx26v",
-      "source": "https://www.pixiv.net/artworks/131128339",
-      "added_at": "2025-09-25T16:29:32+00:00"
-    },
-    {
-      "id": "je8prp",
-      "source": "https://x.com/Crain1Art/status/1841179297446576300",
-      "added_at": "2025-09-25T16:29:32+00:00"
-    },
     {
       "id": "d853dj",
       "source": "https://www.pixiv.net/en/artworks/128944798",
@@ -501,6 +471,36 @@
       "id": "ogdg9p",
       "source": "https://x.com/En_D_D/status/1926586543260500217",
       "added_at": "2025-09-26T12:23:03+00:00"
+    },
+    {
+      "id": "w5o9ep",
+      "source": "https://twitter.com/c_h_a_m_p_i_8/status/1557687638811119616",
+      "added_at": "2025-09-27T00:51:31+00:00"
+    },
+    {
+      "id": "xe1j2d",
+      "source": "https://twitter.com/sydusarts/status/1743668252235231343",
+      "added_at": "2025-09-27T00:51:31+00:00"
+    },
+    {
+      "id": "mlqg61",
+      "source": "https://twitter.com/ytartschool/status/1769714408841003142",
+      "added_at": "2025-09-27T00:51:33+00:00"
+    },
+    {
+      "id": "exdgvk",
+      "source": "https://www.pixiv.net/en/artworks/120453513",
+      "added_at": "2025-09-27T00:51:33+00:00"
+    },
+    {
+      "id": "9oxwlk",
+      "source": "https://www.pixiv.net/en/users/69101980",
+      "added_at": "2025-09-27T00:51:33+00:00"
+    },
+    {
+      "id": "og9rvm",
+      "source": "https://twitter.com/chocoshi3/status/1915364501735813406",
+      "added_at": "2025-09-27T00:51:33+00:00"
     }
   ]
 }
