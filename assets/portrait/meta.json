@@ -1,87 +1,7 @@
 {
-  "updated_at": "2025-10-06T00:54:49+00:00",
+  "updated_at": "2025-10-06T12:25:47+00:00",
   "count": 100,
   "data": [
-    {
-      "id": "je8prp",
-      "source": "https://x.com/Crain1Art/status/1841179297446576300",
-      "added_at": "2025-10-02T00:52:59+00:00"
-    },
-    {
-      "id": "d8p2rl",
-      "source": "https://www.pixiv.net/en/artworks/134235767",
-      "added_at": "2025-10-02T00:52:59+00:00"
-    },
-    {
-      "id": "je3omw",
-      "source": "https://www.pixiv.net/artworks/132490423",
-      "added_at": "2025-10-02T00:53:02+00:00"
-    },
-    {
-      "id": "rq71dm",
-      "source": "https://twitter.com/YonesDraws/status/1893351109684523010",
-      "added_at": "2025-10-02T12:21:51+00:00"
-    },
-    {
-      "id": "qr2dj5",
-      "source": "https://twitter.com/Yan_Kodiac/status/1949998888191951046",
-      "added_at": "2025-10-02T12:21:51+00:00"
-    },
-    {
-      "id": "e87w1r",
-      "source": "https://x.com/OmarvinG94/status/1719373064910028895",
-      "added_at": "2025-10-02T12:21:51+00:00"
-    },
-    {
-      "id": "je9pop",
-      "source": "https://www.pixiv.net/users/62703299",
-      "added_at": "2025-10-02T12:21:51+00:00"
-    },
-    {
-      "id": "je3m35",
-      "source": "https://x.com/advarcher/status/1965672303427219870?t=i5yp_4Ne_CrMA2EOfDtdjw&s=19",
-      "added_at": "2025-10-02T12:21:54+00:00"
-    },
-    {
-      "id": "xe6zjd",
-      "source": "https://x.com/Yan_Kodiac/status/1968827744952656162",
-      "added_at": "2025-10-02T12:21:54+00:00"
-    },
-    {
-      "id": "5ywvq8",
-      "source": "https://www.pixiv.net/users/10034758",
-      "added_at": "2025-10-02T12:22:04+00:00"
-    },
-    {
-      "id": "po929j",
-      "source": "https://www.pixiv.net/users/29232985",
-      "added_at": "2025-10-03T00:52:28+00:00"
-    },
-    {
-      "id": "zpgzrj",
-      "source": "https://www.pixiv.net/users/16275159",
-      "added_at": "2025-10-03T00:52:28+00:00"
-    },
-    {
-      "id": "po373p",
-      "source": "https://www.pixiv.net/artworks/128784801",
-      "added_at": "2025-10-03T00:52:28+00:00"
-    },
-    {
-      "id": "qrdq2q",
-      "source": "https://www.pixiv.net/artworks/111705611",
-      "added_at": "2025-10-03T00:52:28+00:00"
-    },
-    {
-      "id": "yqj267",
-      "source": "https://twitter.com/416781422Xyz/status/1929213536951034181",
-      "added_at": "2025-10-03T00:52:29+00:00"
-    },
-    {
-      "id": "qr2mll",
-      "source": "https://www.fanbox.cc/@torino/posts/10301523",
-      "added_at": "2025-10-03T00:52:34+00:00"
-    },
     {
       "id": "je9kr5",
       "source": "https://www.pixiv.net/en/artworks/103914104",
@@ -501,6 +421,86 @@
       "id": "7j3v1o",
       "source": "https://www.artstation.com/zombie012",
       "added_at": "2025-10-06T00:54:46+00:00"
+    },
+    {
+      "id": "5yd9p3",
+      "source": "https://www.pixiv.net/artworks/131486698",
+      "added_at": "2025-10-06T12:25:31+00:00"
+    },
+    {
+      "id": "5yddx3",
+      "source": "https://x.com/rosumerii/status/1924467273911435272",
+      "added_at": "2025-10-06T12:25:31+00:00"
+    },
+    {
+      "id": "mlq7ly",
+      "source": "https://www.pixiv.net/artworks/120374264",
+      "added_at": "2025-10-06T12:25:32+00:00"
+    },
+    {
+      "id": "21kdjm",
+      "source": "https://twitter.com/kuroneko_no_pei/status/1924032210211877098",
+      "added_at": "2025-10-06T12:25:32+00:00"
+    },
+    {
+      "id": "gwp7p7",
+      "source": "https://www.pixiv.net/en/artworks/129487091",
+      "added_at": "2025-10-06T12:25:33+00:00"
+    },
+    {
+      "id": "xe5myl",
+      "source": "https://www.pixiv.net/artworks/128714559",
+      "added_at": "2025-10-06T12:25:34+00:00"
+    },
+    {
+      "id": "rqd3gm",
+      "source": "https://x.com/ruzhai0609/status/1949756726628016495",
+      "added_at": "2025-10-06T12:25:34+00:00"
+    },
+    {
+      "id": "po32pp",
+      "source": "https://twitter.com/samdoesarts/status/1879572080095895624",
+      "added_at": "2025-10-06T12:25:35+00:00"
+    },
+    {
+      "id": "2ypm9g",
+      "source": "https://www.pixiv.net/en/users/45657658",
+      "added_at": "2025-10-06T12:25:37+00:00"
+    },
+    {
+      "id": "yqjqpg",
+      "source": "",
+      "added_at": "2025-10-06T12:25:37+00:00"
+    },
+    {
+      "id": "vpgeq5",
+      "source": "https://www.pixiv.net/artworks/132133051",
+      "added_at": "2025-10-06T12:25:39+00:00"
+    },
+    {
+      "id": "e8yg6k",
+      "source": "https://x.com/sumutemu_/status/1947187851671777308",
+      "added_at": "2025-10-06T12:25:41+00:00"
+    },
+    {
+      "id": "yqmzm7",
+      "source": "https://www.pixiv.net/artworks/133210531",
+      "added_at": "2025-10-06T12:25:43+00:00"
+    },
+    {
+      "id": "je3w7y",
+      "source": "https://www.pixiv.net/en/artworks/129195634",
+      "added_at": "2025-10-06T12:25:43+00:00"
+    },
+    {
+      "id": "rq7dem",
+      "source": "https://twitter.com/luvluvvox/status/1825477512819880139",
+      "added_at": "2025-10-06T12:25:44+00:00"
+    },
+    {
+      "id": "zpxevg",
+      "source": "https://twitter.com/zaijoubu/status/1934445980532769185",
+      "added_at": "2025-10-06T12:25:46+00:00"
     }
   ]
 }
