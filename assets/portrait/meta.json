@@ -1,12 +1,7 @@
 {
-  "updated_at": "2025-10-08T12:25:02+00:00",
+  "updated_at": "2025-10-09T00:54:41+00:00",
   "count": 100,
   "data": [
-    {
-      "id": "6ljmq6",
-      "source": "https://nagino.booth.pm/items/6776186",
-      "added_at": "2025-10-04T12:20:42+00:00"
-    },
     {
       "id": "vpx31l",
       "source": "https://www.pixiv.net/artworks/129012404",
@@ -501,6 +496,11 @@
       "id": "po2rgp",
       "source": "https://twitter.com/amatizqueen/status/1936696660094222708?t=5hzF6naBFiGOJARpigrFZg&s=19",
       "added_at": "2025-10-08T12:25:02+00:00"
+    },
+    {
+      "id": "ly35rr",
+      "source": "https://www.pixiv.net/en/artworks/126252309",
+      "added_at": "2025-10-09T00:54:12+00:00"
     }
   ]
 }
