@@ -1,37 +1,7 @@
 {
-  "updated_at": "2025-10-17T00:55:05+00:00",
+  "updated_at": "2025-10-17T12:23:35+00:00",
   "count": 100,
   "data": [
-    {
-      "id": "k89lg6",
-      "source": "https://www.pixiv.net/artworks/131023811",
-      "added_at": "2025-10-11T00:51:06+00:00"
-    },
-    {
-      "id": "k8w32q",
-      "source": "https://x.com/jvn_artwork/status/1937437238218096913",
-      "added_at": "2025-10-11T00:51:06+00:00"
-    },
-    {
-      "id": "e875dw",
-      "source": "https://twitter.com/makaiJ/status/1431539848515502090",
-      "added_at": "2025-10-11T00:51:07+00:00"
-    },
-    {
-      "id": "qrzg8q",
-      "source": "https://ruzhai.fanbox.cc/posts/10666508",
-      "added_at": "2025-10-11T00:51:08+00:00"
-    },
-    {
-      "id": "8g3l7j",
-      "source": "https://www.pixiv.net/artworks/131636953",
-      "added_at": "2025-10-11T12:20:16+00:00"
-    },
-    {
-      "id": "je55qy",
-      "source": "https://x.com/jhigf2008/status/1937800433013067851?t=ZWdCgbT5b4yda5ck8cFFbw&s=19",
-      "added_at": "2025-10-11T12:20:17+00:00"
-    },
     {
       "id": "rq77z7",
       "source": "https://www.pixiv.net/artworks/129850035",
@@ -501,6 +471,36 @@
       "id": "gwje7q",
       "source": "https://twitter.com/bleeding_sun/status/1843655656299188259",
       "added_at": "2025-10-17T00:54:57+00:00"
+    },
+    {
+      "id": "7j2yqy",
+      "source": "https://www.pixiv.net/en/artworks/115384966",
+      "added_at": "2025-10-17T12:23:22+00:00"
+    },
+    {
+      "id": "gwp7p7",
+      "source": "https://www.pixiv.net/en/artworks/129487091",
+      "added_at": "2025-10-17T12:23:22+00:00"
+    },
+    {
+      "id": "9o6y8d",
+      "source": "https://www.reddit.com/r/evangelion/comments/w5er5t/unit_00_%E7%B6%BE%E6%B3%A2_%E3%83%AC%E3%82%A4_rei_digital_poster_me/",
+      "added_at": "2025-10-17T12:23:23+00:00"
+    },
+    {
+      "id": "ly32zp",
+      "source": "https://www.weibo.com/7788580743/Pwa7dsbBy",
+      "added_at": "2025-10-17T12:23:27+00:00"
+    },
+    {
+      "id": "je8dp5",
+      "source": "https://www.pixiv.net/en/artworks/130970996",
+      "added_at": "2025-10-17T12:23:28+00:00"
+    },
+    {
+      "id": "21kdry",
+      "source": "https://www.pixiv.net/artworks/114862620",
+      "added_at": "2025-10-17T12:23:34+00:00"
     }
   ]
 }
