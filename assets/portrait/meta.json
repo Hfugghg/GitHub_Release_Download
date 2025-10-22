@@ -1,22 +1,7 @@
 {
-  "updated_at": "2025-10-22T00:57:47+00:00",
+  "updated_at": "2025-10-22T12:25:07+00:00",
   "count": 100,
   "data": [
-    {
-      "id": "je8dp5",
-      "source": "https://www.pixiv.net/en/artworks/130970996",
-      "added_at": "2025-10-17T12:23:28+00:00"
-    },
-    {
-      "id": "21kdry",
-      "source": "https://www.pixiv.net/artworks/114862620",
-      "added_at": "2025-10-17T12:23:34+00:00"
-    },
-    {
-      "id": "8g3l7j",
-      "source": "https://www.pixiv.net/artworks/131636953",
-      "added_at": "2025-10-18T00:52:00+00:00"
-    },
     {
       "id": "je55qy",
       "source": "https://x.com/jhigf2008/status/1937800433013067851?t=ZWdCgbT5b4yda5ck8cFFbw&s=19",
@@ -501,6 +486,21 @@
       "id": "7jp2xo",
       "source": "https://x.com/gogalking",
       "added_at": "2025-10-22T00:57:32+00:00"
+    },
+    {
+      "id": "og3yg9",
+      "source": "https://twitter.com/chocoshi3/status/1755894351354593563",
+      "added_at": "2025-10-22T12:24:38+00:00"
+    },
+    {
+      "id": "og3o95",
+      "source": "https://x.com/PRIxMAL786/status/1965094587195867284",
+      "added_at": "2025-10-22T12:24:40+00:00"
+    },
+    {
+      "id": "5y7yd8",
+      "source": "",
+      "added_at": "2025-10-22T12:24:41+00:00"
     }
   ]
 }
