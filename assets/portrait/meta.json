@@ -1,42 +1,7 @@
 {
-  "updated_at": "2025-10-21T12:24:40+00:00",
+  "updated_at": "2025-10-22T00:57:47+00:00",
   "count": 100,
   "data": [
-    {
-      "id": "k87gk7",
-      "source": "",
-      "added_at": "2025-10-17T00:54:55+00:00"
-    },
-    {
-      "id": "yqjo8x",
-      "source": "https://x.com/uqi32/status/1720259117103620532",
-      "added_at": "2025-10-17T00:54:57+00:00"
-    },
-    {
-      "id": "gwje7q",
-      "source": "https://twitter.com/bleeding_sun/status/1843655656299188259",
-      "added_at": "2025-10-17T00:54:57+00:00"
-    },
-    {
-      "id": "7j2yqy",
-      "source": "https://www.pixiv.net/en/artworks/115384966",
-      "added_at": "2025-10-17T12:23:22+00:00"
-    },
-    {
-      "id": "gwp7p7",
-      "source": "https://www.pixiv.net/en/artworks/129487091",
-      "added_at": "2025-10-17T12:23:22+00:00"
-    },
-    {
-      "id": "9o6y8d",
-      "source": "https://www.reddit.com/r/evangelion/comments/w5er5t/unit_00_%E7%B6%BE%E6%B3%A2_%E3%83%AC%E3%82%A4_rei_digital_poster_me/",
-      "added_at": "2025-10-17T12:23:23+00:00"
-    },
-    {
-      "id": "ly32zp",
-      "source": "https://www.weibo.com/7788580743/Pwa7dsbBy",
-      "added_at": "2025-10-17T12:23:27+00:00"
-    },
     {
       "id": "je8dp5",
       "source": "https://www.pixiv.net/en/artworks/130970996",
@@ -501,6 +466,41 @@
       "id": "og9jym",
       "source": "https://www.pixiv.net/artworks/103744859",
       "added_at": "2025-10-21T12:24:37+00:00"
+    },
+    {
+      "id": "mlpe1m",
+      "source": "https://www.pixiv.net/artworks/129038125",
+      "added_at": "2025-10-22T00:57:15+00:00"
+    },
+    {
+      "id": "w5q6vp",
+      "source": "https://www.bilibili.com/opus/1100082016673595461",
+      "added_at": "2025-10-22T00:57:15+00:00"
+    },
+    {
+      "id": "qrd1rq",
+      "source": "https://www.dlsite.com/maniax/work/=/product_id/RJ01307817.html",
+      "added_at": "2025-10-22T00:57:20+00:00"
+    },
+    {
+      "id": "d8xyjm",
+      "source": "https://kiritzugu.artstation.com/projects/EzZaD0",
+      "added_at": "2025-10-22T00:57:27+00:00"
+    },
+    {
+      "id": "8gxqvo",
+      "source": "https://twitter.com/reiami08/status/1916145209131602327",
+      "added_at": "2025-10-22T00:57:32+00:00"
+    },
+    {
+      "id": "6lo68l",
+      "source": "https://www.pixiv.net/en/artworks/128720728",
+      "added_at": "2025-10-22T00:57:32+00:00"
+    },
+    {
+      "id": "7jp2xo",
+      "source": "https://x.com/gogalking",
+      "added_at": "2025-10-22T00:57:32+00:00"
     }
   ]
 }
