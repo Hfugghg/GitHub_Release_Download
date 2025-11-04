@@ -36,10 +36,10 @@
 
 如果你希望克隆本项目进行二次开发或贡献代码，请使用以下命令。
 **⚠️ 重要提示**：本仓库的 `gh-pages` 分支用于存放部署后的网页和图片资源，体积较大。开发时仅需要 `main` 分支的源代码即可。
-请使用下面的命令只克隆 `main` 分支，以避免下载不必要的数据：
+请使用下面的命令只克隆 `main` 分支的最新一次提交，以避免下载不必要的数据：
 
 ```bash
-git clone --branch main [https://github.com/Hfugghg/GitHub_Release_Download.git](https://github.com/Hfugghg/GitHub_Release_Download.git)
+git clone --branch main --depth 1 --single-branch [https://github.com/Hfugghg/GitHub_Release_Download.git](https://github.com/Hfugghg/GitHub_Release_Download.git)
 ```
 
 ## 💬 交流与反馈
