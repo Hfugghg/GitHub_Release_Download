@@ -35,6 +35,9 @@
     const promptDontShowAgain = document.getElementById('prompt-dont-show-again');
     const wallpaperContainer = document.getElementById('wallpaper-container');
     const wallpaperToggleButton = document.getElementById('wallpaper-toggle-btn');
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const container = document.querySelector('.container');
+    const headerButtons = document.querySelector('.header-buttons');
 
     // --- 状态变量 ---
     let timeoutId;
@@ -170,6 +173,37 @@
         const isCurrentlyOn = document.body.classList.contains('wallpaper-on');
         setWallpaper(!isCurrentlyOn, true);
     });
+
+    // --- 全屏功能 ---
+    const elementsToHideOnFullscreen = [headerButtons, container];
+
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                alert(`进入全屏失败: ${err.message} (${err.name})`);
+            });
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    }
+
+    function handleFullscreenChange() {
+        const isFullscreen = !!document.fullscreenElement;
+        elementsToHideOnFullscreen.forEach(el => {
+            if (el) el.style.display = isFullscreen ? 'none' : '';
+        });
+
+        const fullscreenIcon = document.getElementById('fullscreen-icon');
+        if (isFullscreen) {
+            fullscreenIcon.src = 'https://www.svgrepo.com/show/509915/exit-full-screen.svg';
+            fullscreenBtn.title = '退出全屏';
+        } else {
+            fullscreenIcon.src = 'https://www.svgrepo.com/show/506825/fullscreen.svg';
+            fullscreenBtn.title = '全屏';
+        }
+    }
 
     // --- 辅助函数 ---
     function formatBytes(bytes, decimals = 2) {
@@ -421,6 +455,8 @@
     historyBtn.addEventListener('click', () => currentRepoInfo.owner && fetchReleaseHistory(currentRepoInfo.owner, currentRepoInfo.repo));
     releaseSelector.addEventListener('change', e => fetchReleaseByTag(currentRepoInfo.owner, currentRepoInfo.repo, e.target.value));
     assetSearchInput.addEventListener('input', e => displayAssets(currentAssets.filter(a => a.name.toLowerCase().includes(e.target.value.toLowerCase()))));
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
 
     assetList.addEventListener('click', function (event) {
         const downloadButton = event.target.closest('.download-btn');
