@@ -1,14 +1,13 @@
 (function () {
     // --- 配置 ---
     const predefinedRepos = [
-        {name: 'V2rayN', repo: '2dust/v2rayN'},
-    {name: 'Clash for Windows (经典PC端)', repo: 'Fndroid/clash_for_windows_pkg'},
-    {name: 'Umi-OCR (截图识别)', repo: 'hiroi-sora/Umi-OCR'},
-    {name: 'Jellyfin (媒体服务器)', repo: 'jellyfin/jellyfin'},
-    {name: 'Siyuan Note (笔记软件)', repo: 'siyuan-note/siyuan'},
-    {name: 'Ant-Design (UI组件库)', repo: 'ant-design/ant-design'},
-    {name: 'Tencent/wepy (小程序框架)', repo: 'Tencent/wepy'},
-    {name: 'Hifini (音乐下载)', repo: '670w/hifini'}
+        {name: '禁漫', repo: 'hect0x7/JMComic-APK'},
+        {name: 'EhViewer', repo: 'xiaojieonly/Ehviewer_CN_SXJ'},
+        {name: 'Clash_PC端', repo: 'clash-verge-rev/clash-verge-rev'},
+        {name: 'Clash_Android端', repo: 'MetaCubeX/ClashMetaForAndroid'},
+        {name: '哔咔 (PC端)', repo: 'tonquer/picacg-qt'},
+        {name: '禁漫 (PC端)', repo: 'tonquer/JMComic-qt'},
+        {name: 'venera(整合多个漫画平台)', repo: 'venera-app/venera'}
     ];
     const WALLPAPER_CHANGE_INTERVAL = 10000; // 壁纸切换间隔（10秒）
 
