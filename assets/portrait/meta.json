@@ -1,42 +1,7 @@
 {
-  "updated_at": "2025-11-08T00:54:39+00:00",
+  "updated_at": "2025-11-08T12:21:13+00:00",
   "count": 100,
   "data": [
-    {
-      "id": "7j2yqy",
-      "source": "https://www.pixiv.net/en/artworks/115384966",
-      "added_at": "2025-11-02T12:20:37+00:00"
-    },
-    {
-      "id": "ly32zp",
-      "source": "https://www.weibo.com/7788580743/Pwa7dsbBy",
-      "added_at": "2025-11-02T12:20:40+00:00"
-    },
-    {
-      "id": "9o6y8d",
-      "source": "https://www.reddit.com/r/evangelion/comments/w5er5t/unit_00_%E7%B6%BE%E6%B3%A2_%E3%83%AC%E3%82%A4_rei_digital_poster_me/",
-      "added_at": "2025-11-02T12:20:40+00:00"
-    },
-    {
-      "id": "jexxe5",
-      "source": "https://x.com/Nxhqt/status/1970458130979897475",
-      "added_at": "2025-11-02T12:20:47+00:00"
-    },
-    {
-      "id": "d8xj6l",
-      "source": "https://www.pixiv.net/artworks/121646401",
-      "added_at": "2025-11-03T01:00:01+00:00"
-    },
-    {
-      "id": "yqj267",
-      "source": "https://twitter.com/416781422Xyz/status/1929213536951034181",
-      "added_at": "2025-11-03T01:00:11+00:00"
-    },
-    {
-      "id": "gw81oq",
-      "source": "https://x.com/kkk_kan/status/1581558591550476290",
-      "added_at": "2025-11-03T01:00:14+00:00"
-    },
     {
       "id": "gw7vd3",
       "source": "https://www.pixiv.net/en/artworks/132579744",
@@ -501,6 +466,41 @@
       "id": "yqm1pl",
       "source": "https://www.pixiv.net/artworks/126560656",
       "added_at": "2025-11-08T00:54:18+00:00"
+    },
+    {
+      "id": "w58l7p",
+      "source": "https://www.pixiv.net/artworks/113820036",
+      "added_at": "2025-11-08T12:20:57+00:00"
+    },
+    {
+      "id": "w5ykwx",
+      "source": "https://x.com/syakemayusan/status/1945417311680426461",
+      "added_at": "2025-11-08T12:20:58+00:00"
+    },
+    {
+      "id": "w5862q",
+      "source": "https://x.com/JohnEltitor/status/1381340952615387136",
+      "added_at": "2025-11-08T12:21:00+00:00"
+    },
+    {
+      "id": "og3q6m",
+      "source": "https://www.pixiv.net/en/artworks/134578644",
+      "added_at": "2025-11-08T12:21:00+00:00"
+    },
+    {
+      "id": "k87x31",
+      "source": "https://www.pixiv.net/en/artworks/133498596",
+      "added_at": "2025-11-08T12:21:00+00:00"
+    },
+    {
+      "id": "d85zo3",
+      "source": "https://www.pixiv.net/en/artworks/127504282",
+      "added_at": "2025-11-08T12:21:03+00:00"
+    },
+    {
+      "id": "zpg7lo",
+      "source": "https://www.pixiv.net/en/artworks/110530963",
+      "added_at": "2025-11-08T12:21:06+00:00"
     }
   ]
 }
