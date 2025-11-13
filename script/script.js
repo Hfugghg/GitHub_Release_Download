@@ -39,6 +39,37 @@
     const container = document.querySelector('.container');
     const headerButtons = document.querySelector('.header-buttons');
 
+    // --- 动态创建代理复选框 ---
+    const proxyCheckboxContainer = document.createElement('div');
+    proxyCheckboxContainer.style.marginTop = '10px';
+    proxyCheckboxContainer.style.marginBottom = '10px';
+    proxyCheckboxContainer.style.display = 'flex';
+    proxyCheckboxContainer.style.alignItems = 'center';
+    proxyCheckboxContainer.style.color = 'var(--text-color)'; // 确保颜色和主题一致
+
+    const promptUseProxy = document.createElement('input');
+    promptUseProxy.type = 'checkbox';
+    promptUseProxy.id = 'prompt-use-proxy';
+    promptUseProxy.checked = true; // 默认开启
+
+    const proxyCheckboxLabel = document.createElement('label');
+    proxyCheckboxLabel.htmlFor = 'prompt-use-proxy';
+    proxyCheckboxLabel.textContent = ' 使用代理加速下载 (gh-proxy.com)';
+    proxyCheckboxLabel.style.marginLeft = '5px';
+    proxyCheckboxLabel.style.fontSize = '0.9em';
+    proxyCheckboxLabel.style.cursor = 'pointer';
+
+    proxyCheckboxContainer.appendChild(promptUseProxy);
+    proxyCheckboxContainer.appendChild(proxyCheckboxLabel);
+
+    // 将新的复选框插入到 "不再提示" 复选框的容器 之前
+    if (promptDontShowAgain && promptDontShowAgain.parentElement && promptDontShowAgain.parentElement.parentElement) {
+        promptDontShowAgain.parentElement.parentElement.insertBefore(proxyCheckboxContainer, promptDontShowAgain.parentElement);
+    } else if (promptConfirmBtn && promptConfirmBtn.parentElement) {
+        // 备用方案：插入到确认按钮的容器，在按钮之前
+        promptConfirmBtn.parentElement.insertBefore(proxyCheckboxContainer, promptConfirmBtn);
+    }
+
     // --- 状态变量 ---
     let timeoutId;
     let errorDisplayed = false;
@@ -467,6 +498,7 @@
                 window.open(downloadUrl, '_blank');
             } else {
                 pendingDownloadUrl = downloadUrl;
+                promptUseProxy.checked = true; // 每次打开时都默认选中
                 downloadPromptOverlay.style.display = 'flex';
             }
         }
@@ -477,8 +509,17 @@
         if (promptDontShowAgain.checked) {
             localStorage.setItem('hideDownloadPrompt', 'true');
         }
+
         if (pendingDownloadUrl) {
-            window.open(pendingDownloadUrl, '_blank');
+            let finalDownloadUrl = pendingDownloadUrl;
+            
+            // 检查代理复选框
+            if (promptUseProxy.checked) {
+                // 确保我们不会重复添加代理（pendingDownloadUrl 始终是原始 URL）
+                finalDownloadUrl = 'https://gh-proxy.com/' + pendingDownloadUrl;
+            }
+            
+            window.open(finalDownloadUrl, '_blank');
             pendingDownloadUrl = null;
         }
     });
