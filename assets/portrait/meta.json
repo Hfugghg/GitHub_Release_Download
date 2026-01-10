@@ -1,12 +1,7 @@
 {
-  "updated_at": "2026-01-10T01:01:22+00:00",
+  "updated_at": "2026-01-10T12:23:18+00:00",
   "count": 100,
   "data": [
-    {
-      "id": "5ywvq8",
-      "source": "https://www.pixiv.net/users/10034758",
-      "added_at": "2026-01-03T12:22:59+00:00"
-    },
     {
       "id": "gwpe2l",
       "source": "https://x.com/7200ss/status/1981550605538824552",
@@ -501,6 +496,11 @@
       "id": "9o6y8d",
       "source": "https://www.reddit.com/r/evangelion/comments/w5er5t/unit_00_%E7%B6%BE%E6%B3%A2_%E3%83%AC%E3%82%A4_rei_digital_poster_me/",
       "added_at": "2026-01-10T01:01:19+00:00"
+    },
+    {
+      "id": "xe68ko",
+      "source": "https://x.com/gogalking",
+      "added_at": "2026-01-10T12:23:18+00:00"
     }
   ]
 }
