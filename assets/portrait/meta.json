@@ -1,12 +1,7 @@
 {
-  "updated_at": "2026-06-24T02:26:53+00:00",
+  "updated_at": "2026-06-24T14:08:34+00:00",
   "count": 100,
   "data": [
-    {
-      "id": "lyk1kp",
-      "source": "https://www.pixiv.net/artworks/143792413",
-      "added_at": "2026-06-17T14:52:18+00:00"
-    },
     {
       "id": "w51jyq",
       "source": "https://www.pixiv.net/artworks/117587509",
@@ -501,6 +496,11 @@
       "id": "w5mxox",
       "source": "https://www.pixiv.net/en/artworks/122898857",
       "added_at": "2026-06-24T02:26:50+00:00"
+    },
+    {
+      "id": "8gekz2",
+      "source": "https://x.com/Yan_Kodiac/status/1983670953004650588",
+      "added_at": "2026-06-24T14:07:46+00:00"
     }
   ]
 }
