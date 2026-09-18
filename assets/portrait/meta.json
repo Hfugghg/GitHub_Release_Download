@@ -1,17 +1,7 @@
 {
-  "updated_at": "2026-09-17T15:55:59+00:00",
+  "updated_at": "2026-09-18T02:15:16+00:00",
   "count": 100,
   "data": [
-    {
-      "id": "zpq3ww",
-      "source": "https://x.com/countryisntgold/status/2015324201805119798?s=20",
-      "added_at": "2026-09-06T14:39:30+00:00"
-    },
-    {
-      "id": "gwqoql",
-      "source": "https://www.pixiv.net/artworks/142114684",
-      "added_at": "2026-09-06T14:39:30+00:00"
-    },
     {
       "id": "yq23ed",
       "source": "https://twitter.com/ILuke_S_",
@@ -501,6 +491,16 @@
       "id": "5ym1v1",
       "source": "https://x.com/i/status/2082038413457576427",
       "added_at": "2026-09-17T15:55:49+00:00"
+    },
+    {
+      "id": "5yk6r9",
+      "source": "https://x.com/GlitchAce/status/2032500279975834113",
+      "added_at": "2026-09-18T02:15:09+00:00"
+    },
+    {
+      "id": "qrg18l",
+      "source": "https://x.com/samdoesarts/status/1541091940208443393/photo/1",
+      "added_at": "2026-09-18T02:15:11+00:00"
     }
   ]
 }
