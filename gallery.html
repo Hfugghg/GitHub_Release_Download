@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画廊</title>
+    <link href="style/gallery.css" rel="stylesheet">
+</head>
+<body>
+<div class="background-carousel" id="backgroundCarousel"></div>
+
+<div class="content-wrapper">
+    <div class="container">
+        <div class="header-controls">
+            <a class="btn-round" href="index.html" title="返回主页">
+                &#x2190; </a>
+        </div>
+        <h1>画廊</h1>
+        <div class="gallery-grid" id="galleryGrid">
+        </div>
+        <div id="loader" class="loader" style="display: none;">正在加载...</div>
+    </div>
+</div>
+
+<div id="imageModal" class="modal">
+    <span class="close">&times;</span>
+    <img class="modal-content" id="modalImage">
+    <div id="caption"></div>
+</div>
+
+<script src="script/gallery.js"></script>
+</body>
+</html>
