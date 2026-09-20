@@ -13,36 +13,62 @@ document.addEventListener('DOMContentLoaded', () => {
     let CDN_PREFIX = ''; // 默认禁用 CDN，将通过 IP 检测动态设置
 
     // --- IP 地理位置检测与 CDN 设置 ---
-    async function checkAndSetCDN() {
-        try {
-            // 使用 sessionStorage 缓存检测结果，避免每次刷新都请求 API
-            const cachedStatus = sessionStorage.getItem('cdnStatus');
-            if (cachedStatus) {
-                if (cachedStatus === 'enabled') {
-                    CDN_PREFIX = GCORE_CDN_PREFIX;
-                    console.log("使用缓存的 CDN 设置：启用");
-                } else {
-                    console.log("使用缓存的 CDN 设置：禁用");
-                }
-                return;
-            }
+    // 原实现只依赖 ipapi.co，该接口现已失效（返回 Cloudflare 403 挑战页），
+    // 导致检测必然抛错、CDN 永远启用不了，所有图片都退回直连慢路径。
+    // 这里改为多个可直连接口并发探测，任一成功即可判定。
+    const GEO_APIS = [
+        { url: 'https://api.country.is/', parse: d => d && d.country },
+        { url: 'https://ipinfo.io/json', parse: d => d && d.country },
+        { url: 'https://ipwho.is/', parse: d => d && d.success ? d.country_code : null }
+    ];
+    const GEO_TIMEOUT_MS = 3000;
 
-            const response = await fetch('https://ipapi.co/json/');
-            if (!response.ok) {
-                throw new Error('IP API request failed');
-            }
-            const data = await response.json();
-            if (data.country_code === 'CN') {
-                console.log("检测到中国IP，启用 Gcore CDN");
-                CDN_PREFIX = GCORE_CDN_PREFIX;
-                sessionStorage.setItem('cdnStatus', 'enabled');
-            } else {
-                console.log("非中国IP，使用本地资源");
-                sessionStorage.setItem('cdnStatus', 'disabled');
-            }
+    function fetchCountryCode(api) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), GEO_TIMEOUT_MS);
+        return fetch(api.url, { signal: controller.signal })
+            .then(res => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
+            .then(api.parse)
+            .then(code => {
+                if (!code) throw new Error('接口未返回国家码');
+                return code;
+            })
+            .finally(() => clearTimeout(timer));
+    }
+
+    async function detectCountry() {
+        try {
+            // 并发探测取最先成功的，避免串行等待拖慢首屏
+            return await Promise.any(GEO_APIS.map(fetchCountryCode));
         } catch (error) {
-            console.warn("IP地理位置检测失败，将使用本地资源。", error);
-            sessionStorage.setItem('cdnStatus', 'disabled'); // 检测失败也缓存状态，避免重试
+            return null; // 所有接口都失败
+        }
+    }
+
+    async function checkAndSetCDN() {
+        // 只缓存确定的结论；检测失败不写入缓存，下次访问会重新尝试，
+        // 避免一次网络抖动就把整个会话钉死在慢路径上。
+        const cachedStatus = sessionStorage.getItem('cdnStatus');
+        if (cachedStatus === 'enabled') {
+            CDN_PREFIX = GCORE_CDN_PREFIX;
+            console.log("使用缓存的 CDN 设置：启用");
+            return;
+        }
+        if (cachedStatus === 'disabled') {
+            console.log("使用缓存的 CDN 设置：禁用");
+            return;
+        }
+
+        const countryCode = await detectCountry();
+        if (countryCode === 'CN') {
+            console.log("检测到中国IP，启用 Gcore CDN");
+            CDN_PREFIX = GCORE_CDN_PREFIX;
+            sessionStorage.setItem('cdnStatus', 'enabled');
+        } else if (countryCode) {
+            console.log(`非中国IP (${countryCode})，使用本地资源`);
+            sessionStorage.setItem('cdnStatus', 'disabled');
+        } else {
+            console.warn("IP地理位置检测失败，本次使用本地资源，下次访问会重试。");
         }
     }
 
