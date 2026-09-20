@@ -4,8 +4,8 @@ name: 更新壁纸画廊 (gh-pages)
 
 on:
   schedule:
-    # 每12小时运行一次
-    - cron: '0 */12 * * *'
+    # 每天运行一次（cron 用 UTC，00:00 UTC = 北京时间 08:00）
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
 permissions:
@@ -37,21 +37,42 @@ jobs:
           echo "开始获取和过滤新的壁纸..."
           NEW_IMAGES_JSON="[]"
 
-          LAST_PAGE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=${TOP_RANGE}&purity=100" | jq '.meta.last_page')
-          if [[ -z "$LAST_PAGE" || "$LAST_PAGE" == "null" || "$LAST_PAGE" -lt 1 ]]; then
-            echo "错误：无法获取有效的总页数。跳过本次更新。"
+          # 注意：`2>/dev/null` 和结尾的 `|| true` 是必需的，不能去掉。
+          # wallhaven 不可用时会返回 503 的 HTML 错误页，jq 解析失败会以非 0 退出；
+          # 而 run 步骤是 `bash -e`，管道退出码会让脚本在这里直接终止，
+          # 下面的兜底判断就永远执行不到（这正是 2026-09-19 起连续失败的原因）。
+          LAST_PAGE=$(curl -s -f --retry 3 --retry-delay 5 --max-time 30 \
+            "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=${TOP_RANGE}&purity=100" \
+            2>/dev/null | jq -r '.meta.last_page // empty' 2>/dev/null || true)
+          if [[ -z "$LAST_PAGE" || ! "$LAST_PAGE" =~ ^[0-9]+$ || "$LAST_PAGE" -lt 1 ]]; then
+            echo "警告：无法从 wallhaven 获取有效的总页数（站点可能不可用），跳过本次更新。"
             exit 0
           fi
           echo "壁纸总页数 (toplist/${TOP_RANGE}): $LAST_PAGE"
           
           # --- 【新逻辑】选择要处理的页面 ---
           # 规则：固定第1页，其余随机且偏向低页数，不重复。
+          # 目标页数不能超过总页数，否则随机循环永远凑不齐（LAST_PAGE=1 时会死循环到超时）。
+          TARGET_PAGES=$PAGES_TO_PROCESS
+          if [ "$LAST_PAGE" -lt "$TARGET_PAGES" ]; then
+            TARGET_PAGES=$LAST_PAGE
+            echo "总页数仅 ${LAST_PAGE} 页，本次处理页数下调为 ${TARGET_PAGES}。"
+          fi
+
           PAGES_TO_FETCH="1"
           echo "已将第 1 页加入处理队列。"
-          
+          MAX_SELECT_ATTEMPTS=100
+          SELECT_ATTEMPTS=0
+
           # 循环直到我们有足够数量的页面
-          while [ $(echo "$PAGES_TO_FETCH" | wc -w) -lt $PAGES_TO_PROCESS ]; do
-          
+          while [ $(echo "$PAGES_TO_FETCH" | wc -w) -lt $TARGET_PAGES ]; do
+            # 兜底：页数池很小时随机选页可能一直撞重复，达到尝试上限就用现有队列继续。
+            SELECT_ATTEMPTS=$((SELECT_ATTEMPTS + 1))
+            if [ "$SELECT_ATTEMPTS" -gt "$MAX_SELECT_ATTEMPTS" ]; then
+              echo "警告：随机选页尝试 ${MAX_SELECT_ATTEMPTS} 次仍未凑满 ${TARGET_PAGES} 页，使用当前队列继续。"
+              break
+            fi
+
             # ======================= 从这里开始修改 =======================
             # 【方案二】用80%的概率强制选择20以下的页面
             GATEKEEPER=$((RANDOM % 10)) # 生成一个 0-9 的随机数
@@ -87,12 +108,19 @@ jobs:
           # --- 遍历选定的页面进行处理 ---
           COUNTER=1
           for API_PAGE in $PAGES_TO_FETCH; do
-            echo "正在处理第 ${COUNTER}/${PAGES_TO_PROCESS} 页 (API Page: ${API_PAGE})..."
+            echo "正在处理第 ${COUNTER}/${TARGET_PAGES} 页 (API Page: ${API_PAGE})..."
           
-            API_RESPONSE=$(curl -s "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=${TOP_RANGE}&purity=100&page=${API_PAGE}")
-            PAGE_IMAGES=$(echo "$API_RESPONSE" | jq -c '.data[]')
-          
-            if [[ -z "$PAGE_IMAGES" || $(echo "$PAGE_IMAGES" | wc -l) -eq 0 ]]; then 
+            # 同上面的修复①：这里 jq 失败同样会因 `bash -e` 直接终止脚本，
+            # 让下面的 continue 兜底永远执行不到（翻页接口返回 503 HTML 或
+            # 返回 {"error":"..."} 这类无 data 的 JSON 时都会命中）。
+            # `.data[]?` 负责 data 缺失/为 null 的情况，`|| true` 负责响应不是 JSON 的情况。
+            API_RESPONSE=$(curl -s -f --retry 3 --retry-delay 5 --max-time 30 \
+              "https://wallhaven.cc/api/v1/search?q=anime+girls&categories=010&sorting=toplist&topRange=${TOP_RANGE}&purity=100&page=${API_PAGE}" \
+              2>/dev/null || true)
+            PAGE_IMAGES=$(echo "$API_RESPONSE" | jq -c '.data[]?' 2>/dev/null || true)
+
+            if [[ -z "$PAGE_IMAGES" || $(echo "$PAGE_IMAGES" | wc -l) -eq 0 ]]; then
+              echo "警告：第 ${API_PAGE} 页未取到数据（接口异常或被限流），跳过本页。"
               COUNTER=$((COUNTER + 1))
               continue
             fi
@@ -130,7 +158,13 @@ jobs:
             ID=$(echo "$image_json" | jq -r '.id')
             PATH_URL=$(echo "$image_json" | jq -r '.path')
             SOURCE_URL=$(echo "$image_json" | jq -r '.source')
-            RATIO=$(echo "$image_json" | jq -r '.ratio | tonumber')
+            # 同上的同类陷阱：ratio 缺失或非数字时 tonumber 会报错并以 exit 5 终止脚本。
+            # 用 tonumber? 让它返回空，再显式跳过这一条，避免整轮任务被一张脏数据带走。
+            RATIO=$(echo "$image_json" | jq -r '.ratio | tonumber?' 2>/dev/null || true)
+            if [[ -z "$RATIO" || "$RATIO" == "null" ]]; then
+              echo "警告：${ID} 缺少有效的 ratio（无法判断横竖屏），跳过该图（下次运行会重试）。"
+              continue
+            fi
             EXTENSION="${PATH_URL##*.}"
             FILENAME="${ID}.${EXTENSION}"
             TIMESTAMP=$(date --iso-8601=seconds)
@@ -139,15 +173,40 @@ jobs:
               '{id: $id, source: $source, added_at: $ts}')
 
             if (( $(echo "$RATIO >= 1.0" | bc -l) )); then
-              echo "下载横屏图片: ${FILENAME}"
-              curl -s -L -o "assets/landscape/${FILENAME}" "$PATH_URL"
-              NEW_LANDSCAPE_ENTRIES=$(echo "$NEW_LANDSCAPE_ENTRIES" | jq --argjson entry "$NEW_META_ENTRY" '. + [$entry]')
+              DEST_DIR="assets/landscape"
+              ORIENTATION="横屏"
             else
-              echo "下载竖屏图片: ${FILENAME}"
-              curl -s -L -o "assets/portrait/${FILENAME}" "$PATH_URL"
-              NEW_PORTRAIT_ENTRIES=$(echo "$NEW_PORTRAIT_ENTRIES" | jq --argjson entry "$NEW_META_ENTRY" '. + [$entry]')
+              DEST_DIR="assets/portrait"
+              ORIENTATION="竖屏"
+            fi
+
+            # 先下到临时文件、确认拿到的确实是图片，再落盘并写入 meta。
+            # 否则 wallhaven 返回错误页时会把 HTML 存成 .jpg，而且该 id 已进 meta.json，
+            # 之后每轮都会被"已存在"过滤掉，永远不会重试。
+            echo "下载${ORIENTATION}图片: ${FILENAME}"
+            TMP_FILE=$(mktemp)
+            if curl -s -f -L --retry 3 --retry-delay 3 --max-time 120 -o "$TMP_FILE" "$PATH_URL" \
+               && [ -s "$TMP_FILE" ] \
+               && file --mime-type -b "$TMP_FILE" | grep -q '^image/'; then
+              mv "$TMP_FILE" "${DEST_DIR}/${FILENAME}"
+              if [ "$DEST_DIR" = "assets/landscape" ]; then
+                NEW_LANDSCAPE_ENTRIES=$(echo "$NEW_LANDSCAPE_ENTRIES" | jq --argjson entry "$NEW_META_ENTRY" '. + [$entry]')
+              else
+                NEW_PORTRAIT_ENTRIES=$(echo "$NEW_PORTRAIT_ENTRIES" | jq --argjson entry "$NEW_META_ENTRY" '. + [$entry]')
+              fi
+            else
+              rm -f "$TMP_FILE"
+              echo "警告：${FILENAME} 下载失败或返回内容不是图片，已跳过（下次运行会重试）。"
             fi
           done < <(echo "$NEW_IMAGES_JSON" | jq -c '.[]')
+
+          # 一张都没下成功时不要往下走：否则下面会重写 meta.json 的 updated_at
+          # 却没有任何新增条目，导致每轮推一个空提交，而且 run 还是绿的、无人察觉。
+          if [[ $(echo "$NEW_LANDSCAPE_ENTRIES" | jq 'length') -eq 0 \
+             && $(echo "$NEW_PORTRAIT_ENTRIES" | jq 'length') -eq 0 ]]; then
+            echo "警告：本轮所有图片都下载失败，未写入任何元数据，跳过本次更新（下次运行会重试）。"
+            exit 0
+          fi
 
           LANDSCAPE_META=$(jq -s '.[0] + .[1]' <(echo "$OLD_LANDSCAPE_META") <(echo "$NEW_LANDSCAPE_ENTRIES"))
           PORTRAIT_META=$(jq -s '.[0] + .[1]' <(echo "$OLD_PORTRAIT_META") <(echo "$NEW_PORTRAIT_ENTRIES"))
