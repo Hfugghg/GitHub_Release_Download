@@ -21,7 +21,17 @@
 本仓库把约 1 GB 壁纸放在 `gh-pages` 并经 jsDelivr 分发，基本就是它举的这个例子。
 同节还写明，违规时可以 "withdraw or restrict the availability of all or any part of
 jsDelivr CDN"。条款另有一条禁止 "sexually explicit" 内容——当前抓取用的是
-`purity=100`（仅 SFW），但这条的判定权在对方。
+`purity=100`（仅 SFW），但判定权在对方。
+
+需要平衡看待的是，同节紧接着留了余地：
+
+> We recognize that there are legitimate projects that consist of a large number of
+> files, and these are not considered abuse. For example: icons packs, apps, or games
+> with a large number of assets.
+
+一个壁纸画廊能不能算进这个范畴，条款没给明确答案。所以这条应当读作"有实质风险、
+值得提前准备退路"，而不是"确定会被封"。真正的判断依据是上面那句对图床的举例，
+以及实际使用量（当前每目录 100 张、总量约 1 GB）。
 
 **一旦被处置的后果**：国内访客失去 CDN 路径，回落到 GitHub Pages 直连。
 实测差距（同一批 6 个文件、共 26.88 MB，各跑两轮）：
@@ -60,28 +70,46 @@ CDN 正常工作时首屏仍需约 10 秒，瓶颈是数据量而不是路径。
 
 ---
 
-## P1 · gh-pages 已经顶到 GitHub Pages 的体积上限
+## P1 · gh-pages 体积已超过 GitHub Pages 上限
 
-**实测**：
+**站点的发布来源**（`gh api repos/Hfugghg/GitHub_Release_Download/pages` 实测）：
 
-| 项目 | 数值 |
+    "build_type": "legacy",
+    "source": { "branch": "gh-pages", "path": "/" }
+
+即站点直接由 `gh-pages` 分支根目录发布。Actions 里那个
+`pages build and deployment` 是 GitHub 为这种 legacy 分支源执行的发布流程，
+**不是另一个分支**。所以「发布出去的站点」就等于「`gh-pages` 分支的内容」。
+
+**实测体积**：
+
+| 对象 | 数值 |
 | --- | --- |
-| `assets/landscape` | 102 个文件，604 MB |
-| `assets/portrait` | 102 个文件，431 MB |
-| `gh-pages` 内容合计 | **约 1.03 GB** |
-| 仓库总体积（含历史） | **约 20.3 GB** |
+| `assets/landscape` | 100 张图 + `index.json`/`meta.json`，604 MB |
+| `assets/portrait` | 100 张图 + `index.json`/`meta.json`，431 MB |
+| `gh-pages` 分支内容（＝发布出的站点） | **约 1.03 GB** |
+| 仓库总体积（含全部历史） | **约 20.3 GB** |
 
-每个图片目录的 102 个文件 = 100 张图 + `index.json` + `meta.json`。
+**官方限制**（GitHub Pages limits）——原文是**两条不同的限制，针对不同对象**，
+强度也不同，不要混为一谈：
 
-**官方限制**（GitHub Pages limits）：
+| 官方原文 | 针对对象 | 本仓库 |
+| --- | --- | --- |
+| "Published GitHub Pages sites may be **no larger than 1 GB**."（硬性） | 发布出的站点，即 `gh-pages` 内容 | 约 1.03 GB，**已超** |
+| "GitHub Pages source repositories have a **recommended limit** of 1 GB."（建议值） | 作为 Pages 源的整个仓库 | 约 20.3 GB，远超 |
 
-* "Published GitHub Pages sites may be **no larger than 1 GB**."
-* "GitHub Pages source repositories have a **recommended limit of 1 GB**."
-* "GitHub Pages sites have a **soft bandwidth limit of 100 GB per month**."
+同页另列：带宽软限制 100 GB/月、部署超过 10 分钟会超时、每小时 10 次构建
+（用自定义 Actions 工作流发布的不受此限）。
 
-**说明**：内容体积已经压在这个硬性上限上了。另外 `update-wallpaper.yml` 的 FIFO
-清理只从工作区删掉旧图，**被删文件的 blob 仍留在 git 历史里**，所以仓库总体积
-只增不减——20.3 GB 就是这么累积出来的。
+超限后果的原文是："we may not be able to serve your site, or you may receive a
+polite email from GitHub Support suggesting strategies for reducing your site's
+impact on our servers, **including putting a third-party content distribution
+network (CDN) in front of your site**"。注意 GitHub 自己就建议挂第三方 CDN——
+画廊做的正是这件事，问题出在选的 jsDelivr 不允许这种用法（见 P0）。
+
+**补充说明**：`update-wallpaper.yml` 的 FIFO 清理只从工作区删掉旧图，
+**被删文件的 blob 仍留在 git 历史里**，所以仓库总体积只增不减——20.3 GB 就是
+这么累积出来的。
 
 **可选方向**：
 
