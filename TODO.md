@@ -109,13 +109,30 @@ network (CDN) in front of your site**"。注意 GitHub 自己就建议挂第三�
 
 **补充说明**：`update-wallpaper.yml` 的 FIFO 清理只从工作区删掉旧图，
 **被删文件的 blob 仍留在 git 历史里**，所以仓库总体积只增不减——20.3 GB 就是
-这么累积出来的。
+这么累积出来的。GitHub 对仓库体积的建议是
+"ideally less than 1 GB, and **less than 5 GB is strongly recommended**"，
+20.3 GB 早已越过强建议线，同页还写明"If your repository excessively impacts our
+infrastructure, you might receive an email from GitHub Support asking you to take
+corrective action."
+
+**已加入 `squash-gh-pages-history.yml`**（每月 1 日 03:00 UTC，可手动触发）：
+把 `gh-pages` 的历史压缩成单个提交。`gh-pages` 是纯发布产物，历史没有保留价值。
+两道保险：新提交的内容树必须与旧的逐字节一致才推送；用 `--force-with-lease`
+指定期望的远端值，若这期间有新壁纸推送则拒绝而不是覆盖。
+
+**但要清楚它的边界**——它能**止住增长**，不保证回收已有体积。旧对象变成不可达
+之后能否真正释放，取决于 GitHub 后台的 gc。而 GitHub 文档明确写着
+"**GitHub Support won't remove non-sensitive data**，and will only assist in the
+removal of sensitive data"，即官方不会为瘦身手动跑 gc。所以：
+
+* 判断是否回收，看 `gh api repos/Hfugghg/GitHub_Release_Download --jq .size`（KB）
+  是否随时间下降，工作流每次运行也会把前/后的 size 打进日志
+* 若长期不降，说明这条路走不通，得从结构上解决——把图片移出 git，改用外部存储
 
 **可选方向**：
 
-* 缩小图片（与上一条同一方案，一次解决两个问题）
-* 定期重建 `gh-pages` 历史（例如新开分支后强推，丢弃旧 blob）以回收空间
-* 图片移出 git，改用外部存储
+* 缩小图片（与上一条同一方案，一次解决多个问题）
+* 图片移出 git，改用外部存储（唯一不依赖 GitHub gc 的根治办法）
 
 ---
 

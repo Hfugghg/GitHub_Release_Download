@@ -1,0 +1,101 @@
+# 每月把 gh-pages 的历史压缩成一个提交。
+#
+# 为什么需要：
+#   update-wallpaper.yml 每轮都会往 gh-pages 追加一个新提交，其 FIFO 清理只删
+#   工作区的旧图，被删文件的 blob 仍然挂在历史里可达。于是每轮新增的壁纸都会
+#   永久留在 git 历史中，仓库只增不减（2026-09-20 实测约 20.3 GB）。
+#   gh-pages 是纯粹的发布产物，历史没有任何保留价值，压掉即可。
+#
+# 安全性：
+#   1. 只有在"新提交的 tree 与旧提交完全一致"时才推送，内容不可能丢。
+#   2. 用 --force-with-lease 指定期望的远端值：若这期间 update-wallpaper 推了
+#      新壁纸，远端不再是该值，推送会被拒绝而不是覆盖掉新内容。
+#
+# 注意（别高估它的作用）：
+#   本工作流能让"可达历史"不再增长，但**不保证**已有的历史体积被回收。
+#   旧对象变成不可达之后，能否真正释放取决于 GitHub 后台的 gc。
+#   GitHub 文档明确写着 "GitHub Support won't remove non-sensitive data"，
+#   所以官方不会为瘦身手动跑 gc。实际是否回收，靠观察仓库 size 判断：
+#     gh api repos/<owner>/<repo> --jq .size      # 单位 KB
+#   若长期不降，说明得从结构上解决：把图片移出 git（见 TODO.md）。
+
+name: 压缩 gh-pages 历史
+
+on:
+  schedule:
+    # 每月 1 日 03:00 UTC（北京时间 11:00）
+    - cron: '0 3 1 * *'
+  # 允许手动触发
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  squash:
+    runs-on: ubuntu-latest
+    steps:
+      # 只需要最新一次提交的内容来重建，不需要下载全部历史，
+      # 所以保持浅克隆（本仓库历史有几十 GB，全量 fetch 会非常慢）
+      - name: 检出 gh-pages（浅克隆）
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 1
+
+      - name: 用当前内容重建为单个提交
+        id: rebuild
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+
+          OLD_COMMIT=$(git rev-parse HEAD)
+          OLD_TREE=$(git rev-parse "HEAD^{tree}")
+          FILE_COUNT=$(git ls-files | wc -l)
+          echo "重建前: commit=$OLD_COMMIT tree=$OLD_TREE 文件数=$FILE_COUNT"
+
+          # 创建一个没有父提交的分支，工作区与索引保持原样
+          git checkout --orphan squashed-history
+          git add -A
+          git commit -q -m "chore: 压缩 gh-pages 历史（内容等同 ${OLD_COMMIT}）"
+
+          NEW_TREE=$(git rev-parse "HEAD^{tree}")
+          NEW_COUNT=$(git ls-files | wc -l)
+          echo "重建后: tree=$NEW_TREE 文件数=$NEW_COUNT"
+
+          # 内容必须逐字节一致，否则中止。这是防丢文件的关键保险。
+          if [ "$OLD_TREE" != "$NEW_TREE" ]; then
+            echo "::error::重建后的内容树与原来不一致，已中止。旧=$OLD_TREE 新=$NEW_TREE"
+            exit 1
+          fi
+          if [ "$FILE_COUNT" != "$NEW_COUNT" ]; then
+            echo "::error::文件数不一致（$FILE_COUNT -> $NEW_COUNT），已中止。"
+            exit 1
+          fi
+          echo "✅ 内容树与文件数均一致，可以推送"
+
+          # 传给下一步
+          {
+            echo "OLD_COMMIT=$OLD_COMMIT"
+            echo "OLD_TREE=$OLD_TREE"
+            echo "FILE_COUNT=$FILE_COUNT"
+          } >> "$GITHUB_ENV"
+
+      - name: 强推覆盖 gh-pages
+        run: |
+          set -euo pipefail
+
+          echo "远端推送前 size: $(gh api "repos/${GITHUB_REPOSITORY}" --jq .size) KB"
+
+          # --force-with-lease 带上期望值：远端若不仍是我们检出的那个提交
+          # （例如这期间有新的壁纸推送），这里会被拒绝，不会覆盖新内容。
+          git push \
+            --force-with-lease=refs/heads/gh-pages:"${OLD_COMMIT}" \
+            origin HEAD:refs/heads/gh-pages
+
+          echo "✅ gh-pages 历史已压缩为 1 个提交（内容树 ${OLD_TREE}，${FILE_COUNT} 个文件）"
+          echo "远端推送后 size: $(gh api "repos/${GITHUB_REPOSITORY}" --jq .size) KB"
+          echo "注意：size 不会立刻下降，旧对象需等 GitHub 后台 gc 回收。"
+        env:
+          GH_TOKEN: ${{ github.token }}
