@@ -57,3 +57,8 @@ git clone --branch main --depth 1 --single-branch [https://github.com/Hfugghg/Gi
 * 本工具仅为方便下载而制作，所有文件均直接从 GitHub 的官方服务器下载。
 * 请确保您下载的文件来自可信的开发者和仓库。
 * 本工具的作者不对您下载的任何文件及其可能产生的后果负责。
+
+## 📌 待办
+
+画廊页面的性能与存储问题（图片体积过大、CDN 依赖的合规风险、`gh-pages`
+已顶到 GitHub Pages 体积上限）记录在 [TODO.md](TODO.md)。
