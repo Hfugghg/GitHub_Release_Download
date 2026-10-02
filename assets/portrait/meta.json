@@ -1,37 +1,7 @@
 {
-  "updated_at": "2026-10-01T04:44:55+00:00",
+  "updated_at": "2026-10-02T04:36:58+00:00",
   "count": 100,
   "data": [
-    {
-      "id": "zpolro",
-      "source": "https://www.instagram.com/p/DTQeFl1kV6F/?img_index=2",
-      "added_at": "2026-09-11T02:07:03+00:00"
-    },
-    {
-      "id": "rqo271",
-      "source": "https://www.pixiv.net/artworks/142529611",
-      "added_at": "2026-09-11T02:07:13+00:00"
-    },
-    {
-      "id": "8gdrj1",
-      "source": "https://www.pixiv.net/en/artworks/130548096#1",
-      "added_at": "2026-09-11T02:07:15+00:00"
-    },
-    {
-      "id": "poy2v3",
-      "source": "https://x.com/Lhata4564/status/2022619373303926953",
-      "added_at": "2026-09-11T02:07:16+00:00"
-    },
-    {
-      "id": "yqgrox",
-      "source": "https://x.com/_meisaki_/status/2044892526973227320",
-      "added_at": "2026-09-12T02:12:33+00:00"
-    },
-    {
-      "id": "3q6lr3",
-      "source": "https://x.com/chainsoul4/status/1907991517714632990",
-      "added_at": "2026-09-12T02:12:34+00:00"
-    },
     {
       "id": "21ozzg",
       "source": "https://x.com/PluviumG/status/2071104553014153515",
@@ -501,6 +471,36 @@
       "id": "mlo3r8",
       "source": "https://www.pixiv.net/en/users/37869799",
       "added_at": "2026-10-01T04:44:52+00:00"
+    },
+    {
+      "id": "zpd22j",
+      "source": "https://x.com/shirakawamana/status/2049930153724350884?s=20",
+      "added_at": "2026-10-02T04:36:46+00:00"
+    },
+    {
+      "id": "9org3d",
+      "source": "https://www.pixiv.net/artworks/134578495",
+      "added_at": "2026-10-02T04:36:47+00:00"
+    },
+    {
+      "id": "xep223",
+      "source": "https://www.pixiv.net/artworks/145100631",
+      "added_at": "2026-10-02T04:36:48+00:00"
+    },
+    {
+      "id": "e82wpl",
+      "source": "https://www.pixiv.net/artworks/123830636",
+      "added_at": "2026-10-02T04:36:51+00:00"
+    },
+    {
+      "id": "219m36",
+      "source": "https://x.com/aoo_ni/status/2041803315634483610",
+      "added_at": "2026-10-02T04:36:54+00:00"
+    },
+    {
+      "id": "6l216w",
+      "source": "https://x.com/i/status/2045114764918174120",
+      "added_at": "2026-10-02T04:36:57+00:00"
     }
   ]
 }
