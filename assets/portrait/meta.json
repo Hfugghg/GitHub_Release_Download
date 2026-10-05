@@ -1,22 +1,7 @@
 {
-  "updated_at": "2026-10-04T04:50:13+00:00",
+  "updated_at": "2026-10-05T04:38:09+00:00",
   "count": 100,
   "data": [
-    {
-      "id": "zpodxy",
-      "source": "https://www.pixiv.net/artworks/143186628",
-      "added_at": "2026-09-15T02:32:21+00:00"
-    },
-    {
-      "id": "7j18ge",
-      "source": "https://x.com/lufi_ays/status/2033306602384904524?s=20",
-      "added_at": "2026-09-15T02:32:22+00:00"
-    },
-    {
-      "id": "yq2qll",
-      "source": "https://www.patreon.com/c/porforever/home?vanity=porforever",
-      "added_at": "2026-09-15T15:55:50+00:00"
-    },
     {
       "id": "1qg7eg",
       "source": "https://x.com/elfe_art",
@@ -501,6 +486,21 @@
       "id": "zpdgmj",
       "source": "https://www.pixiv.net/artworks/131149245",
       "added_at": "2026-10-04T04:50:12+00:00"
+    },
+    {
+      "id": "vpd36p",
+      "source": "https://www.pixiv.net/en/artworks/146417882",
+      "added_at": "2026-10-05T04:38:06+00:00"
+    },
+    {
+      "id": "3q6d6y",
+      "source": "https://www.pixiv.net/en/users/33558705",
+      "added_at": "2026-10-05T04:38:08+00:00"
+    },
+    {
+      "id": "rqj75j",
+      "source": "https://twitter.com/Lhata4564/status/1797612321088651278",
+      "added_at": "2026-10-05T04:38:08+00:00"
     }
   ]
 }
