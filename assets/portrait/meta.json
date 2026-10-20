@@ -1,22 +1,7 @@
 {
-  "updated_at": "2026-10-19T03:44:37+00:00",
+  "updated_at": "2026-10-20T03:55:35+00:00",
   "count": 100,
   "data": [
-    {
-      "id": "xedexz",
-      "source": "https://www.pixiv.net/en/artworks/146562409",
-      "added_at": "2026-09-22T03:50:50+00:00"
-    },
-    {
-      "id": "ogjlvm",
-      "source": "https://x.com/Melowh_art3/status/2072093196247564443",
-      "added_at": "2026-09-23T03:48:36+00:00"
-    },
-    {
-      "id": "9o978k",
-      "source": "https://www.bilibili.com/opus/1206370143579406357",
-      "added_at": "2026-09-23T03:48:37+00:00"
-    },
     {
       "id": "21276x",
       "source": "https://www.pixiv.net/en/artworks/144741717",
@@ -501,6 +486,21 @@
       "id": "lyj8yy",
       "source": "https://boosty.to/iskanderednaksi",
       "added_at": "2026-10-19T03:44:24+00:00"
+    },
+    {
+      "id": "8g81rj",
+      "source": "https://www.pixiv.net/en/artworks/140141522",
+      "added_at": "2026-10-20T03:55:28+00:00"
+    },
+    {
+      "id": "gwm3oq",
+      "source": "https://www.pixiv.net/artworks/146164408",
+      "added_at": "2026-10-20T03:55:33+00:00"
+    },
+    {
+      "id": "yqvq87",
+      "source": "https://www.bilibili.com/opus/1200367793632968757",
+      "added_at": "2026-10-20T03:55:33+00:00"
     }
   ]
 }
