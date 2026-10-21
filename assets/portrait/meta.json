@@ -1,42 +1,7 @@
 {
-  "updated_at": "2026-10-20T03:55:35+00:00",
+  "updated_at": "2026-10-21T03:45:50+00:00",
   "count": 100,
   "data": [
-    {
-      "id": "21276x",
-      "source": "https://www.pixiv.net/en/artworks/144741717",
-      "added_at": "2026-09-23T03:48:44+00:00"
-    },
-    {
-      "id": "6lpe17",
-      "source": "https://x.com/i/status/2005222543960227894",
-      "added_at": "2026-09-25T03:57:15+00:00"
-    },
-    {
-      "id": "poj95e",
-      "source": "https://www.pixiv.net/en/artworks/138911070#1",
-      "added_at": "2026-09-25T03:57:22+00:00"
-    },
-    {
-      "id": "6lpzyl",
-      "source": "https://www.pixiv.net/en/artworks/146478590",
-      "added_at": "2026-09-25T03:57:23+00:00"
-    },
-    {
-      "id": "7jrj69",
-      "source": "",
-      "added_at": "2026-09-25T03:57:25+00:00"
-    },
-    {
-      "id": "rqozdq",
-      "source": "https://www.patreon.com/posts/154153425",
-      "added_at": "2026-09-25T03:57:26+00:00"
-    },
-    {
-      "id": "9o8q7k",
-      "source": "https://x.com/Tencarcyan/status/1991289635776200948",
-      "added_at": "2026-09-25T03:57:27+00:00"
-    },
     {
       "id": "d8dxdo",
       "source": "https://x.com/elfe_art",
@@ -501,6 +466,41 @@
       "id": "yqvq87",
       "source": "https://www.bilibili.com/opus/1200367793632968757",
       "added_at": "2026-10-20T03:55:33+00:00"
+    },
+    {
+      "id": "ogjlvm",
+      "source": "https://x.com/Melowh_art3/status/2072093196247564443",
+      "added_at": "2026-10-21T03:45:31+00:00"
+    },
+    {
+      "id": "9o978k",
+      "source": "https://www.bilibili.com/opus/1206370143579406357",
+      "added_at": "2026-10-21T03:45:31+00:00"
+    },
+    {
+      "id": "3q5p56",
+      "source": "https://x.com/goldcan6955/status/1940022400713990491",
+      "added_at": "2026-10-21T03:45:36+00:00"
+    },
+    {
+      "id": "k821p1",
+      "source": "https://x.com/tp_p_pt/status/1891131281892634903",
+      "added_at": "2026-10-21T03:45:40+00:00"
+    },
+    {
+      "id": "og6od7",
+      "source": "https://x.com/wonbin_lee_/status/1934217945120711063",
+      "added_at": "2026-10-21T03:45:49+00:00"
+    },
+    {
+      "id": "pomjq9",
+      "source": "https://www.pixiv.net/artworks/148658694",
+      "added_at": "2026-10-21T03:45:49+00:00"
+    },
+    {
+      "id": "jedjgy",
+      "source": "https://x.com/kani_biimu/status/1828749110217957785",
+      "added_at": "2026-10-21T03:45:50+00:00"
     }
   ]
 }
