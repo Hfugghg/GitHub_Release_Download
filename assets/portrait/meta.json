@@ -1,37 +1,7 @@
 {
-  "updated_at": "2026-10-27T04:08:30+00:00",
+  "updated_at": "2026-10-28T04:36:31+00:00",
   "count": 100,
   "data": [
-    {
-      "id": "8g85j2",
-      "source": "https://www.bilibili.com/opus/1247442941544235013",
-      "added_at": "2026-10-03T04:18:31+00:00"
-    },
-    {
-      "id": "yqgrox",
-      "source": "https://x.com/_meisaki_/status/2044892526973227320",
-      "added_at": "2026-10-03T04:18:33+00:00"
-    },
-    {
-      "id": "3q6lr3",
-      "source": "https://x.com/chainsoul4/status/1907991517714632990",
-      "added_at": "2026-10-03T04:18:34+00:00"
-    },
-    {
-      "id": "5ymy19",
-      "source": "https://x.com/i/status/2070718776627310684",
-      "added_at": "2026-10-04T04:50:06+00:00"
-    },
-    {
-      "id": "6lykex",
-      "source": "",
-      "added_at": "2026-10-04T04:50:07+00:00"
-    },
-    {
-      "id": "k821dm",
-      "source": "https://www.pixiv.net/artworks/107159427",
-      "added_at": "2026-10-04T04:50:07+00:00"
-    },
     {
       "id": "jevg3q",
       "source": "https://www.pixiv.net/en/artworks/142600187",
@@ -501,6 +471,36 @@
       "id": "e82wz8",
       "source": "https://www.bilibili.com/opus/1165377530395361304",
       "added_at": "2026-10-27T04:08:28+00:00"
+    },
+    {
+      "id": "yqv5yl",
+      "source": "https://www.xiaohongshu.com/explore/6a03f75e0000000006030aa5?xsec_token=CBJw3CbHZC02NZ6GCS6VygMkSc39L2_zJQEZjb1P9SdZ4=",
+      "added_at": "2026-10-28T04:36:19+00:00"
+    },
+    {
+      "id": "xedexz",
+      "source": "https://www.pixiv.net/en/artworks/146562409",
+      "added_at": "2026-10-28T04:36:19+00:00"
+    },
+    {
+      "id": "xepxx3",
+      "source": "https://boosty.to/iskanderednaksi",
+      "added_at": "2026-10-28T04:36:21+00:00"
+    },
+    {
+      "id": "k82mj1",
+      "source": "https://www.bilibili.com/opus/1214130028467453961?spm_id_from=333.1387.0.0",
+      "added_at": "2026-10-28T04:36:23+00:00"
+    },
+    {
+      "id": "e8w11r",
+      "source": "https://www.pixiv.net/artworks/145288855",
+      "added_at": "2026-10-28T04:36:27+00:00"
+    },
+    {
+      "id": "yq23ed",
+      "source": "https://twitter.com/ILuke_S_",
+      "added_at": "2026-10-28T04:36:28+00:00"
     }
   ]
 }
