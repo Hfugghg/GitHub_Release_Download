@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>GitHub 最新 Release 下载器</title>
+    <link href="style/style.css" rel="stylesheet">
+</head>
+
+<body>
+<div id="wallpaper-container"></div>
+<div class="header-buttons">
+    <a class="btn" id="theme-toggle-btn" title="切换深色/浅色模式" href="javascript:void(0);">
+        <img id="theme-icon" alt="Toggle Theme" src="https://www.svgrepo.com/show/527250/moon-sleep.svg" style="width: 20px; height: 20px; vertical-align: middle;">
+    </a>
+    <a class="btn" id="wallpaper-toggle-btn" title="切换背景壁纸" href="javascript:void(0);">
+        <img id="wallpaper-icon" alt="Toggle Wallpaper" src="https://www.svgrepo.com/show/528282/gallery-minimalistic.svg" style="width: 20px; height: 20px; vertical-align: middle;">
+    </a>
+    <a class="btn" id="fullscreen-btn" title="全屏" href="javascript:void(0);">
+        <img id="fullscreen-icon" alt="Toggle Fullscreen" src="https://www.svgrepo.com/show/506825/fullscreen.svg" style="width: 20px; height: 20px; vertical-align: middle;">
+    </a>
+    <a class="btn" href="gallery.html" title="画廊">
+        <img alt="Gallery" src="https://www.svgrepo.com/show/528282/gallery-minimalistic.svg" style="width: 20px; height: 20px; vertical-align: middle;">
+        画廊
+    </a>
+    <a class="btn github-btn" href="https://github.com/Hfugghg/GitHub_Release_Download" target="_blank">
+        <img alt="GitHub Logo" src="https://www.svgrepo.com/show/361509/github-logo.svg">
+        本项目主页
+    </a>
+    <a class="btn feedback-btn" href="https://github.com/Hfugghg/GitHub_Release_Download/issues"
+       target="_blank">反馈问题</a>
+    <a class="btn qq-btn" href="javascript:void(0);" id="qqGroupBtn">
+        <img alt="QQ Logo" src="https://www.svgrepo.com/show/447108/qq-fill.svg">
+        加入QQ群
+    </a>
+    <div id="wechatOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); color: white; text-align: center; z-index: 999;">
+        <p style="padding-top: 50%; font-size: 20px;">请点击右上角菜单<br>选择“在浏览器中打开”</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="repo-selection">
+        <h2>选择或输入 GitHub 仓库</h2>
+        <div class="predefined-repos" id="predefinedRepos">
+        </div>
+        <div class="custom-repo" style="position: relative;">
+            <input id="customRepoInput" placeholder="输入 用户名/仓库名 (例如: octocat/Spoon-Knife)" type="text">
+            <div id="repoDropdown"></div>
+            <button class="btn custom-fetch-btn" id="fetchCustomRepoBtn">获取</button>
+        </div>
+    </div>
+
+    <div class="status-section" id="statusSection">
+        <div class="spinner" id="spinner"></div>
+        <h1 id="statusTitle">请选择一个仓库</h1>
+        <p class="status-text" id="statusText"></p>
+    </div>
+
+    <div class="release-info" id="releaseInfo">
+        <h3>
+            版本说明
+            <button class="btn" id="historyBtn" style="display: none; margin-left: 10px;">查看历史版本</button>
+            <a href="#" id="viewOnGithubBtn" class="btn" target="_blank" rel="noopener noreferrer" style="display: none; margin-left: 8px;">打开官方列表</a>
+        </h3>
+        <div id="historyContainer" style="display: none; margin-top: 10px;">
+            <select id="releaseSelector" style="width: 100%;"></select>
+        </div>
+        <div class="release-body" id="releaseBody">
+        </div>
+    </div>
+
+    <div class="download-assets" id="downloadAssets">
+        <h3>下载文件</h3>
+        <div class="search-container">
+            <input type="text" id="assetSearchInput" placeholder="搜索文件..." style="width: 100%; margin-bottom: 10px;">
+        </div>
+        <div id="assetList">
+        </div>
+    </div>
+</div>
+
+<div id="download-prompt-overlay">
+    <div id="download-prompt">
+        <p>如果IP在国内下载速度较慢是正常的，请使用代理或多线程下载尝试提速。</p>
+        <div class="prompt-actions">
+            <label>
+                <input type="checkbox" id="prompt-dont-show-again">
+                下次不再提示
+            </label>
+            <button id="prompt-confirm-btn">明白</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/marked@latest/lib/marked.umd.js"></script>
+<script src="script/script.js"></script>
+
+</body>
+
+</html>

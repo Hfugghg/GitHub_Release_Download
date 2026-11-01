@@ -1,0 +1,757 @@
+/* --- 基本变量和重置 --- */
+:root {
+    --container-bg-wallpaper-on: rgba(255, 255, 255, 0.85);
+    --primary-color: #6c5ce7;
+    --secondary-color: #a8a4e6;
+    --light-gray: #f0f0f0;
+    --medium-gray: #ccc;
+    --dark-gray: #555;
+    --text-color: #333;
+    --error-color: #e74c3c;
+    --success-color: #2ecc71;
+    --bg-gradient-start: #74ebd5;
+    --bg-gradient-end: #ACB6E5;
+    --container-bg: rgba(255, 255, 255, 0.98);
+    --repo-selection-border: #eee;
+    --input-bg: #fff;
+    --input-border: #ccc;
+    --release-info-bg: #f9f9f9;
+    --release-info-border: #eee;
+    --code-bg: #eee;
+    --table-border: #ccc;
+    --table-header-bg: #f0f0f0;
+}
+
+[data-theme='dark'] {
+    --container-bg-wallpaper-on: rgba(42, 42, 42, 0.85);
+    --primary-color: #8a7ff0;
+    --secondary-color: #6c5ce7;
+    --light-gray: #2a2a2a;
+    --medium-gray: #555;
+    --dark-gray: #bbb;
+    --text-color: #f0f0f0;
+    --bg-gradient-start: #232526;
+    --bg-gradient-end: #414345;
+    --container-bg: rgba(42, 42, 42, 0.98);
+    --repo-selection-border: #444;
+    --input-bg: #333;
+    --input-border: #555;
+    --release-info-bg: #2a2a2a;
+    --release-info-border: #444;
+    --code-bg: #333;
+    --table-border: #555;
+    --table-header-bg: #3a3a3a;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+    color: var(--text-color);
+    transition: background 0.3s, color 0.3s;
+}
+
+/* --- 主容器 --- */
+.container {
+    background: var(--container-bg);
+    border-radius: 15px;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 95%;
+    max-width: 800px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    transition: background 0.3s;
+    z-index: 1; /* 确保容器在壁纸之上 */
+}
+
+body.wallpaper-on .container {
+    background: var(--container-bg-wallpaper-on);
+}
+
+/* --- 仓库选择区域 --- */
+.repo-selection {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--repo-selection-border);
+}
+
+.repo-selection h2 {
+    color: var(--text-color);
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.predefined-repos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.custom-repo {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.custom-repo input[type="text"] {
+    padding: 10px 15px;
+    border: 1px solid var(--input-border);
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    border-radius: 20px;
+    font-size: 0.95rem;
+    flex-grow: 1;
+    min-width: 200px;
+}
+
+/* --- 按钮 --- */
+.btn {
+    background: var(--primary-color);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(108, 92, 231, 0.3);
+}
+
+.btn.repo-btn {
+    background-color: var(--secondary-color);
+}
+
+.btn.repo-btn.active {
+    background-color: var(--primary-color);
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(108, 92, 231, 0.2);
+}
+
+.btn.download-btn {
+    font-size: 0.9rem;
+    padding: 8px 15px;
+    margin-top: 8px;
+}
+
+.btn.custom-fetch-btn {
+    padding: 10px 15px;
+}
+
+/* --- 状态/加载区域 --- */
+.status-section {
+    margin-top: 1rem;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.spinner {
+    width: 35px;
+    height: 35px;
+    border: 4px solid var(--light-gray);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1.2s linear infinite;
+    display: none;
+}
+
+#statusTitle {
+    color: var(--text-color);
+    margin-bottom: 0.3rem;
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+#statusText {
+    color: var(--dark-gray);
+    font-size: 1rem;
+    line-height: 1.5;
+    min-height: 1.5em;
+}
+
+#statusText.error {
+    color: var(--error-color);
+    font-weight: 500;
+}
+
+/* --- 发布信息区域 --- */
+.release-info {
+    margin-top: 1.5rem;
+    text-align: left;
+    background-color: var(--release-info-bg);
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--release-info-border);
+    display: none;
+}
+
+.release-info h3 {
+    color: var(--text-color);
+    margin-bottom: 0.8rem;
+    font-size: 1.2rem;
+    border-bottom: 1px solid var(--medium-gray);
+    padding-bottom: 0.5rem;
+}
+
+.release-body {
+    color: var(--dark-gray);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* 基本 Markdown 格式 */
+.release-body strong {
+    font-weight: bold;
+}
+
+.release-body h1,
+.release-body h2,
+.release-body h3,
+.release-body h4 {
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.release-body h1 {
+    font-size: 1.5em;
+}
+
+.release-body h2 {
+    font-size: 1.3em;
+}
+
+.release-body h3 {
+    font-size: 1.15em;
+}
+
+.release-body h4 {
+    font-size: 1.0em;
+}
+
+.release-body a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.release-body a:hover {
+    text-decoration: underline;
+}
+
+.release-body ul,
+.release-body ol {
+    margin-left: 2em;
+    margin-bottom: 1em;
+}
+
+.release-body code {
+    background-color: var(--code-bg);
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: monospace;
+}
+
+.release-body pre {
+    background-color: var(--code-bg);
+    padding: 1em;
+    border-radius: 5px;
+    overflow-x: auto;
+}
+
+.release-body pre code {
+    background-color: transparent;
+    padding: 0;
+}
+
+.release-body img {
+    max-width: 100%;
+    height: auto;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.release-body table {
+    border-collapse: collapse;
+    margin-bottom: 1em;
+    width: auto;
+}
+
+.release-body th,
+.release-body td {
+    border: 1px solid var(--table-border);
+    padding: 0.5em;
+}
+
+.release-body th {
+    background-color: var(--table-header-bg);
+    font-weight: bold;
+}
+
+/* --- 下载资源区域 --- */
+.download-assets {
+    margin-top: 1.5rem;
+    text-align: left;
+    display: none;
+}
+
+.download-assets h3 {
+    color: var(--text-color);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+/*搜索框样式*/
+.search-container {
+    margin-bottom: 1rem;
+}
+
+#assetSearchInput {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid var(--input-border);
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    border-radius: 20px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#assetSearchInput:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+}
+
+.asset-item {
+    background-color: var(--input-bg);
+    border: 1px solid var(--release-info-border);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.asset-info {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.asset-name {
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 1.05rem;
+    word-break: break-all;
+    margin-bottom: 0.3rem;
+}
+
+.asset-details {
+    font-size: 0.85rem;
+    color: var(--dark-gray);
+}
+
+.asset-details span {
+    margin-right: 10px;
+}
+
+/* --- 动画 --- */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* --- 响应式设计 --- */
+@media (max-width: 600px) {
+    .container {
+        padding: 1rem 1.5rem;
+        width: 100%;
+    }
+
+    .asset-item {
+        flex-direction: column;
+    }
+
+    .predefined-repos {
+        gap: 0.5rem;
+    }
+
+    .btn {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+    }
+
+    .btn.download-btn {
+        width: 100%;
+        flex-shrink: 0;
+        margin-top: 0;
+        text-align: center;
+    }
+
+    .custom-repo input[type="text"] {
+        min-width: 150px;
+        width: calc(100% - 85px);
+    }
+}
+
+#statusTitle {
+    font-size: 1.2rem;
+}
+
+#statusText {
+    font-size: 0.9rem;
+}
+
+.release-info h3,
+.download-assets h3 {
+    font-size: 1.1rem;
+}
+
+.release-body {
+    font-size: 0.9rem;
+}
+
+.asset-item {
+    align-items: flex-start;
+}
+
+.asset-name {
+    font-size: 1rem;
+}
+
+@media (max-width: 400px) {
+    .custom-repo {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .custom-repo input[type="text"] {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .btn.custom-fetch-btn {
+        width: 100%;
+    }
+}
+
+#repoDropdown {
+    position: absolute;
+    display: none;
+    border: 1px solid var(--input-border);
+    background-color: var(--input-bg);
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0;
+    margin-top: 5px;
+    top: 100%;
+    left: 0;
+}
+
+#repoDropdown div {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--repo-selection-border);
+}
+
+#repoDropdown div:last-child {
+    border-bottom: none;
+}
+
+#repoDropdown div:hover {
+    background-color: var(--light-gray);
+}
+
+/* 手机端样式 */
+@media (max-width: 768px) {
+    #repoDropdown {
+        max-height: 200px;
+    }
+}
+
+/* 简单样式，你可以根据需要调整 */
+.header-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px;
+    align-items: center; /* 垂直居中对齐 */
+}
+
+.header-buttons .btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    color: white;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+}
+
+.header-buttons .github-btn {
+    background-color: #333;
+}
+
+.header-buttons .feedback-btn {
+    background-color: #007bff;
+}
+
+.header-buttons .btn img {
+    height: 1.2em;
+    margin-right: 5px;
+    vertical-align: middle;
+    filter: invert(1);
+}
+
+.qq-btn {
+    background-color: #55acee;
+}
+.qq-btn img {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+}
+
+/* --- 历史版本选择 --- */
+#historyContainer {
+    margin-top: 1rem;
+}
+
+#releaseSelector {
+    width: 100%;
+    border: 1px solid var(--input-border);
+    border-radius: 20px;
+    font-size: 0.95rem;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236c5ce7%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 20px center;
+    background-size: 10px;
+    padding: 10px 40px 10px 15px;
+}
+
+#releaseSelector:hover {
+    border-color: var(--primary-color);
+}
+
+#historyBtn {
+    background-color: var(--secondary-color);
+    color: white;
+    font-weight: 500;
+    padding: 5px 12px;
+    font-size: 0.85rem;
+    vertical-align: middle;
+}
+
+#historyBtn:hover {
+    background-color: var(--primary-color);
+}
+
+#viewOnGithubBtn {
+    background-color: #333;
+    color: white;
+    padding: 5px 12px;
+    font-size: 0.85rem;
+    vertical-align: middle;
+    text-decoration: none;
+}
+
+#viewOnGithubBtn:hover {
+    background-color: #555;
+}
+
+/* --- 主题切换按钮样式 --- */
+#theme-toggle-btn {
+    background: transparent; /* 透明背景 */
+    border: none; /* 无边框 */
+    box-shadow: none; /* 无阴影 */
+    padding: 8px;
+    border-radius: 50%; /* 圆形按钮 */
+    z-index: 1001; /* 确保按钮在页面其他内容之上 */
+}
+
+#theme-toggle-btn:hover {
+    background-color: rgba(0, 0, 0, 0.08); /* 悬停时添加轻微的背景色 */
+    transform: none; /* 覆盖通用的按钮悬停效果 */
+    box-shadow: none; /* 覆盖通用的按钮悬停效果 */
+}
+
+/* 深色模式下的悬停效果 */
+[data-theme='dark'] #theme-toggle-btn:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+#theme-toggle-btn img {
+    width: 24px; /* 调整图标宽度 */
+    height: 24px; /* 调整图标高度 */
+    filter: none; /* 覆盖 .header-buttons .btn img 的滤镜效果 */
+    margin: 0; /* 这是一个只有图标的按钮，不需要外边距 */
+    vertical-align: middle; /* 确保图标垂直居中 */
+}
+
+/* --- 下载提示弹窗 --- */
+#download-prompt-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: none; /* 默认隐藏 */
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+#download-prompt {
+    background: var(--container-bg);
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+}
+
+#download-prompt p {
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--text-color);
+}
+
+.prompt-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.prompt-actions label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--dark-gray);
+}
+
+#prompt-confirm-btn {
+    background: var(--primary-color);
+    color: white;
+    padding: 10px 25px;
+    border: none;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#prompt-confirm-btn:hover {
+    background-color: var(--secondary-color);
+}
+
+/* --- 壁纸 --- */
+#wallpaper-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background-image: url('../assets/background.jpg');
+    background-size: cover;
+    background-position: center;
+    opacity: 0; /* 默认关闭时不可见 */
+    transition: opacity 1s ease-in-out; /* 平滑过渡效果 */
+}
+
+body.wallpaper-on #wallpaper-container {
+    opacity: 1; /* 打开时可见 */
+}
+
+/* --- 壁纸切换按钮 --- */
+#wallpaper-toggle-btn {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 8px;
+    border-radius: 50%;
+    cursor: pointer;
+    /* 移除固定定位，使其在 flex 容器中自然排列 */
+}
+
+#wallpaper-toggle-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: none;
+    box-shadow: none;
+}
+
+[data-theme='dark'] #wallpaper-toggle-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+#wallpaper-toggle-btn img {
+    width: 24px;
+    height: 24px;
+    filter: invert(1); /* 与其他图标按钮保持一致 */
+    margin: 0;
+    vertical-align: middle;
+}
+
+#wallpaper-toggle-btn.active img {
+    filter: none; /* 激活时可以设置不同样式，例如移除滤镜 */
+}
