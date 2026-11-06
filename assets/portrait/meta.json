@@ -1,22 +1,7 @@
 {
-  "updated_at": "2026-11-05T05:39:40+00:00",
+  "updated_at": "2026-11-06T05:36:26+00:00",
   "count": 100,
   "data": [
-    {
-      "id": "k8j99q",
-      "source": "https://www.patreon.com/c/porforever/home?vanity=porforever",
-      "added_at": "2026-10-15T03:41:14+00:00"
-    },
-    {
-      "id": "8grze2",
-      "source": "https://www.pixiv.net/artworks/145713736",
-      "added_at": "2026-10-15T03:41:14+00:00"
-    },
-    {
-      "id": "3q7yky",
-      "source": "https://www.weibo.com/1990983307/4540759133657492",
-      "added_at": "2026-10-15T03:41:21+00:00"
-    },
     {
       "id": "po75mm",
       "source": "https://boosty.to/iskanderednaksi",
@@ -501,6 +486,21 @@
       "id": "5ypqy9",
       "source": "https://www.pixiv.net/en/artworks/133387847",
       "added_at": "2026-11-05T05:39:40+00:00"
+    },
+    {
+      "id": "21ozzg",
+      "source": "https://x.com/PluviumG/status/2071104553014153515",
+      "added_at": "2026-11-06T05:36:22+00:00"
+    },
+    {
+      "id": "7jejlo",
+      "source": "https://www.artstation.com/zombie012",
+      "added_at": "2026-11-06T05:36:23+00:00"
+    },
+    {
+      "id": "jelrgq",
+      "source": "https://www.pixiv.net/en/users/15423015",
+      "added_at": "2026-11-06T05:36:23+00:00"
     }
   ]
 }
