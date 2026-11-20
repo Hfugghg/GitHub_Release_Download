@@ -1,12 +1,7 @@
 {
-  "updated_at": "2026-11-19T06:26:35+00:00",
+  "updated_at": "2026-11-20T06:12:15+00:00",
   "count": 100,
   "data": [
-    {
-      "id": "xedj1z",
-      "source": "https://www.pixiv.net/en/users/9470369",
-      "added_at": "2026-10-25T03:41:41+00:00"
-    },
     {
       "id": "yq983l",
       "source": "https://x.com/Kommi_Ene",
@@ -501,6 +496,11 @@
       "id": "mlowym",
       "source": "https://x.com/syGmani/status/2082483118712500646?s=20",
       "added_at": "2026-11-19T06:26:32+00:00"
+    },
+    {
+      "id": "mlo3r8",
+      "source": "https://www.pixiv.net/en/users/37869799",
+      "added_at": "2026-11-20T06:12:12+00:00"
     }
   ]
 }
